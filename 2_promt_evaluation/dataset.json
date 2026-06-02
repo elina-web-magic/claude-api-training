@@ -1,0 +1,11 @@
+[
+  {
+    "task": "Write a Python function that parses an AWS CloudFormation template (JSON string) and returns a list of all EC2 instance logical IDs defined in the Resources section."
+  },
+  {
+    "task": "Create a JSON object that represents an AWS IAM policy allowing read-only access to a specific S3 bucket named 'my-data-bucket'."
+  },
+  {
+    "task": "Write a regex pattern that matches valid AWS ARN (Amazon Resource Name) formats, such as 'arn:aws:s3:::my-bucket' or 'arn:aws:ec2:us-east-1:123456789012:instance/i-0abcd1234efgh5678'."
+  }
+]

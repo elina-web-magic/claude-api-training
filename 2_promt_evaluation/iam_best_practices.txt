@@ -1,0 +1,9 @@
+1.  Enable multi-factor authentication (MFA) for all users, especially those with administrative privileges.
+
+2. Create and use IAM roles instead of access keys for applications and services running on AWS resources.
+
+3. Apply the principle of least privilege by granting users only the permissions they need to perform their job.
+
+4. Regularly audit and remove unused IAM users, roles, and access keys to reduce security risks.
+
+5. Use IAM policy conditions to restrict access based on IP addresses, time of day, or other contextual factors.
