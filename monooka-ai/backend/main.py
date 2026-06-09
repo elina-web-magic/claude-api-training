@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from anthropic import Anthropic
+from prompts import run_diet_planner_prompt
 
 # Load env variables (assuming .env is in the parent parent directory where the training repo is)
 load_dotenv(dotenv_path="../../.env")
@@ -121,28 +122,53 @@ def send_message(req: SendMessageRequest):
     if chat["title"].startswith("New Chat"):
         chat["title"] = req.content[:30] + ("..." if len(req.content) > 30 else "")
 
-    # Call Claude API based on Context
-    # For now, we simulate calling the logic from the notebooks using a generic system prompt based on context
-    
-    system_prompt = "You are Monooka AI, a helpful assistant."
-    if chat["context"] == "001_prompting":
-        system_prompt += " The user is testing prompt engineering concepts. Provide clear, direct answers, maintaining the persona requested."
-    elif chat["context"] == "001_promt_evals_practice":
-        system_prompt += " The user is practicing prompt evaluation. Act as an evaluator grading AI outputs based on criteria."
-        
     try:
-        # Prepare messages for Anthropic (excluding any internal UI-only messages if needed)
-        api_messages = [{"role": m["role"], "content": m["content"]} for m in chat["messages"]]
-        
-        response = anthropic_client.messages.create(
-            model="claude-3-5-haiku-20241022",
-            max_tokens=1000,
-            system=system_prompt,
-            messages=api_messages
-        )
-        
-        bot_text = response.content[0].text
-        
+        # Check if the user is in the Prompting context
+        if chat["context"].endswith("001_prompting"):
+            # Use Claude to extract parameters
+            extractor_prompt = f"""
+            Extract these parameters from the user's text: height (cm), weight (kg), goal, restrictions.
+            Return ONLY valid JSON like: {{"height": "160", "weight": "60", "goal": "lose weight", "restrictions": "none"}}
+            If a parameter is not mentioned, use "unknown".
+            User text: {req.content}
+            """
+            extract_res = anthropic_client.messages.create(
+                model="claude-3-haiku-20240307",
+                max_tokens=200,
+                messages=[{"role": "user", "content": extractor_prompt}],
+                temperature=0
+            )
+            params = json.loads(extract_res.content[0].text)
+            
+            # Run the Diet Planner prompt template
+            final_prompt = run_diet_planner_prompt(
+                str(params.get("height", "unknown")),
+                str(params.get("weight", "unknown")),
+                str(params.get("goal", "unknown")),
+                str(params.get("restrictions", "none"))
+            )
+            
+            # Send the generated prompt to Claude
+            response = anthropic_client.messages.create(
+                model="claude-3-5-haiku-20241022",
+                max_tokens=1000,
+                messages=[{"role": "user", "content": final_prompt}],
+                temperature=1.0
+            )
+            bot_text = response.content[0].text
+            
+        else:
+            # Generic chat fallback for other contexts
+            system_prompt = "You are Monooka AI, a helpful assistant."
+            api_messages = [{"role": m["role"], "content": m["content"]} for m in chat["messages"]]
+            response = anthropic_client.messages.create(
+                model="claude-3-5-haiku-20241022",
+                max_tokens=1000,
+                system=system_prompt,
+                messages=api_messages
+            )
+            bot_text = response.content[0].text
+            
     except Exception as e:
         bot_text = f"Error calling Claude API: {str(e)}"
         
