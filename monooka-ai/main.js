@@ -229,7 +229,7 @@ async function sendMessage() {
 			appendMessage("bot", "Error communicating with server.");
 		}
 
-		await loadHistory(); // update title if changed
+		await loadCurriculum(); // update active state if changed
 	} catch (e) {
 		removeTypingIndicator(typingId);
 		appendMessage("bot", "Network error.");
