@@ -217,6 +217,9 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# Monooka AI
+monooka-ai/backend/*.json
+
 # OS Files
 .DS_Store
 .DS_Store?
