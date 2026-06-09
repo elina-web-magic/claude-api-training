@@ -1,0 +1,17 @@
+[
+  {
+    "task": "Parse an AWS S3 bucket name from an S3 URI (e.g., 's3://my-bucket/path/to/file.txt') and return it as a JSON object with the bucket name and file key",
+    "format": "json",
+    "solution_criteria": "JSON object must contain 'bucket' and 'key' fields with correctly extracted values from the S3 URI"
+  },
+  {
+    "task": "Write a Python function that takes an AWS IAM policy JSON string and returns a list of all resource ARNs mentioned in the policy",
+    "format": "python",
+    "solution_criteria": "Function must parse the policy JSON, extract all unique ARNs from the Resource/NotResource fields, and handle both string and array formats"
+  },
+  {
+    "task": "Create a regex pattern that matches valid AWS EC2 instance IDs (format: i-followed by 8 or 17 hexadecimal characters)",
+    "format": "regex",
+    "solution_criteria": "Regex must match valid instance IDs like 'i-1234567890abcdef0' and 'i-12345678', but reject invalid formats"
+  }
+]
