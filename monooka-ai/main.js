@@ -11,17 +11,35 @@ const themeToggle = document.getElementById("theme-toggle");
 const menuBtn = document.getElementById("menu-btn");
 const mobileMenuBtn = document.getElementById("mobile-menu-btn");
 const sidebar = document.getElementById("sidebar");
-const historyList = document.getElementById("history-list");
-const contextSelect = document.getElementById("context-select");
-const newChatBtn = document.getElementById("new-chat-btn");
+const curriculumContainer = document.getElementById("curriculum-container");
 
 let currentChatId = null;
+let curriculumData = [];
 
 // Initialization
 async function init() {
-	await loadHistory();
-	// Optionally create a default empty chat on load
-	// await createNewChat();
+	const params = new URLSearchParams(window.location.search);
+	const initialLesson = params.get("lesson");
+	if (initialLesson) {
+		currentChatId = initialLesson;
+	}
+	
+	await loadCurriculum();
+	
+	if (currentChatId) {
+		let foundLesson = null;
+		for (const proj of curriculumData) {
+			for (const l of proj.lessons) {
+				if (l.id === currentChatId) {
+					foundLesson = l;
+					break;
+				}
+			}
+		}
+		if (foundLesson) {
+			await loadChat(foundLesson.id, foundLesson.title);
+		}
+	}
 }
 
 // Auto-resize textarea
@@ -45,7 +63,7 @@ chatInput.addEventListener("keydown", (e) => {
 });
 
 sendBtn.addEventListener("click", sendMessage);
-newChatBtn.addEventListener("click", createNewChat);
+sendBtn.addEventListener("click", sendMessage);
 
 // Theme Toggle
 let isDark = true;
@@ -75,68 +93,102 @@ document.addEventListener("click", (e) => {
 });
 
 // API Calls
-async function loadHistory() {
+// API Calls
+async function loadCurriculum() {
 	try {
-		const res = await fetch(`${API_BASE}/history`);
-		const history = await res.json();
-		renderHistory(history);
+		const res = await fetch(`${API_BASE}/curriculum`);
+		curriculumData = await res.json();
+		renderCurriculum();
 	} catch (e) {
-		console.error("Failed to load history", e);
+		console.error("Failed to load curriculum", e);
 	}
 }
 
-function renderHistory(history) {
-	historyList.innerHTML = "";
-	history.forEach((chat) => {
-		const div = document.createElement("div");
-		div.className = `history-item ${chat.id === currentChatId ? "active" : ""}`;
-		div.textContent = chat.title || "New Chat";
-		div.onclick = () => loadChat(chat.id);
-		historyList.appendChild(div);
+function renderCurriculum() {
+	curriculumContainer.innerHTML = "";
+	curriculumData.forEach((proj) => {
+		const projDiv = document.createElement("div");
+		projDiv.className = "curriculum-project";
+		
+		const header = document.createElement("div");
+		header.className = "project-header";
+		header.innerHTML = `
+			<div class="title-wrapper">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+					<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+				</svg>
+				<span title="${proj.title}">${proj.title}</span>
+			</div>
+			<svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+				<polyline points="6 9 12 15 18 9"></polyline>
+			</svg>
+		`;
+		
+		const lessonsList = document.createElement("div");
+		lessonsList.className = "lessons-list";
+		
+		// Simple accordion toggle
+		header.onclick = () => {
+			lessonsList.classList.toggle("open");
+			header.classList.toggle("open");
+		};
+		
+		proj.lessons.forEach((lesson) => {
+			const item = document.createElement("div");
+			item.className = `lesson-item ${lesson.id === currentChatId ? "active" : ""}`;
+			item.textContent = lesson.title;
+			item.title = lesson.title;
+			item.onclick = (e) => {
+				e.stopPropagation();
+				loadChat(lesson.id, lesson.title);
+			};
+			lessonsList.appendChild(item);
+		});
+		
+		// Auto open project containing the active lesson or the first project
+		const isActiveProject = proj.lessons.some(l => l.id === currentChatId);
+		if (isActiveProject || (!currentChatId && curriculumData.indexOf(proj) === 0)) {
+			lessonsList.classList.add("open");
+			header.classList.add("open");
+		}
+		
+		projDiv.appendChild(header);
+		projDiv.appendChild(lessonsList);
+		curriculumContainer.appendChild(projDiv);
 	});
 }
 
-async function createNewChat() {
-	const context = contextSelect.value;
+async function loadChat(lessonId, lessonTitle) {
 	try {
-		const res = await fetch(`${API_BASE}/chat`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ context }),
-		});
+		// Update URL without page reload
+		window.history.pushState({}, "", "?lesson=" + lessonId);
+		
+		const res = await fetch(`${API_BASE}/chat/${lessonId}`);
+		if (!res.ok) throw new Error("Failed to load chat");
 		const chat = await res.json();
-		currentChatId = chat.id;
-
-		// Clear UI
-		messagesList.innerHTML = "";
-		welcomeScreen.style.display = "flex";
-		welcomeScreen.innerHTML = `
-			<h1 class="welcome-title">Hello, Elina</h1>
-			<p class="welcome-subtitle">Testing context: ${context}.ipynb</p>
-		`;
-
-		await loadHistory(); // refresh sidebar
-	} catch (e) {
-		console.error("Failed to create chat", e);
-	}
-}
-
-async function loadChat(chatId) {
-	try {
-		const res = await fetch(`${API_BASE}/chat/${chatId}`);
-		const chat = await res.json();
+		
 		currentChatId = chat.id;
 
 		messagesList.innerHTML = "";
 		welcomeScreen.style.display = chat.messages.length ? "none" : "flex";
 
-		// Update context select to match this chat
-		contextSelect.value = chat.context;
+		if (!chat.messages.length) {
+			welcomeScreen.innerHTML = `
+				<h1 class="welcome-title">${lessonTitle || chat.title}</h1>
+				<p class="welcome-subtitle">Testing context: ${chat.context}</p>
+			`;
+		}
 
 		chat.messages.forEach((msg) => {
 			appendMessage(msg.role, msg.content);
 		});
-		await loadHistory(); // update active state in sidebar
+		
+		// Update active state in sidebar
+		renderCurriculum();
+		
+		if (window.innerWidth <= 768) {
+			sidebar.classList.remove("open");
+		}
 	} catch (e) {
 		console.error("Failed to load chat", e);
 	}
@@ -147,7 +199,8 @@ async function sendMessage() {
 	if (!text) return;
 
 	if (!currentChatId) {
-		await createNewChat();
+		alert("Please select a lesson from the sidebar first.");
+		return;
 	}
 
 	welcomeScreen.style.display = "none";
@@ -192,7 +245,7 @@ function appendMessage(role, text) {
 
 	messageDiv.innerHTML = `
     <div class="avatar">${initial}</div>
-    <div class="message-content">${escapeHTML(text)}</div>
+    <div class="message-content markdown-body">${marked.parse(text)}</div>
   `;
 
 	messagesList.appendChild(messageDiv);
@@ -233,14 +286,5 @@ function scrollToBottom() {
 	chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-function escapeHTML(str) {
-	return str
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/"/g, "&quot;")
-		.replace(/'/g, "&#039;")
-		.replace(/\n/g, "<br>");
-}
 
 init();

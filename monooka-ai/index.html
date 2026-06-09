@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   </head>
   <body>
     <div class="app-container">
@@ -22,28 +23,8 @@
           <span class="logo-text">Monooka AI</span>
         </div>
         
-        <button type="button" class="new-chat-btn" id="new-chat-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Plus Icon"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          New Chat
-        </button>
-
-        <div class="context-selector">
-          <label for="context-select">Lesson Context:</label>
-          <select id="context-select" class="custom-select">
-            <option value="1_accessing_claude/001_requests_exercise">1_accessing_claude/001_requests_exercise</option>
-            <option value="1_accessing_claude/002_system_promt">1_accessing_claude/002_system_promt</option>
-            <option value="1_accessing_claude/003_temperature">1_accessing_claude/003_temperature</option>
-            <option value="1_accessing_claude/004_streaming">1_accessing_claude/004_streaming</option>
-            <option value="1_accessing_claude/005_controlling_output">1_accessing_claude/005_controlling_output</option>
-            <option value="2_promt_evaluation/001_promt_evals">2_promt_evaluation/001_promt_evals</option>
-            <option value="2_promt_evaluation/001_promt_evals_copy">2_promt_evaluation/001_promt_evals_copy</option>
-            <option value="2_promt_evaluation/001_promt_evals_practice">2_promt_evaluation/001_promt_evals_practice</option>
-            <option value="3_promt/001_prompting">3_promt/001_prompting</option>
-          </select>
-        </div>
-
-        <div class="history-list" id="history-list">
-          <!-- History items will be dynamically inserted here -->
+        <div class="curriculum-container" id="curriculum-container">
+          <!-- Accordion structure will be rendered here by JS -->
         </div>
         
         <div class="sidebar-footer">

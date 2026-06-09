@@ -1,0 +1,137 @@
+[
+  {
+    "id": "1_accessing_claude",
+    "title": "Accessing Claude with the API",
+    "lessons": [
+      {"id": "1_accessing_the_api", "title": "Accessing the API"},
+      {"id": "1_getting_an_api_key", "title": "Getting an API key"},
+      {"id": "1_making_a_request", "title": "Making a request"},
+      {"id": "1_multi_turn_conversations", "title": "Multi-Turn conversations"},
+      {"id": "1_chat_exercise", "title": "Chat exercise"},
+      {"id": "1_system_prompts", "title": "System prompts"},
+      {"id": "1_system_prompts_exercise", "title": "System prompts exercise"},
+      {"id": "1_temperature", "title": "Temperature"},
+      {"id": "1_course_satisfaction_survey", "title": "Course satisfaction survey"},
+      {"id": "1_response_streaming", "title": "Response streaming"},
+      {"id": "1_structured_data", "title": "Structured data"},
+      {"id": "1_structured_data_exercise", "title": "Structured data exercise"},
+      {"id": "1_quiz_accessing_claude", "title": "Quiz on accessing Claude with the API"}
+    ]
+  },
+  {
+    "id": "2_prompt_evaluation",
+    "title": "Prompt evaluation",
+    "lessons": [
+      {"id": "2_prompt_evaluation", "title": "Prompt evaluation"},
+      {"id": "2_typical_eval_workflow", "title": "A typical eval workflow"},
+      {"id": "2_generating_test_datasets", "title": "Generating test datasets"},
+      {"id": "2_running_the_eval", "title": "Running the eval"},
+      {"id": "2_model_based_grading", "title": "Model based grading"},
+      {"id": "2_code_based_grading", "title": "Code based grading"},
+      {"id": "2_exercise_on_prompt_evals", "title": "Exercise on prompt evals"},
+      {"id": "2_quiz_prompt_evaluation", "title": "Quiz on prompt evaluation"}
+    ]
+  },
+  {
+    "id": "3_prompt_engineering_techniques",
+    "title": "Prompt engineering techniques",
+    "lessons": [
+      {"id": "3_prompt_engineering", "title": "Prompt engineering"},
+      {"id": "3_being_clear_and_direct", "title": "Being clear and direct"},
+      {"id": "3_being_specific", "title": "Being specific"},
+      {"id": "3_structure_with_xml_tags", "title": "Structure with XML tags"},
+      {"id": "3_providing_examples", "title": "Providing examples"},
+      {"id": "3_exercise_on_prompting", "title": "Exercise on prompting"},
+      {"id": "3_quiz_prompt_engineering", "title": "Quiz on prompt engineering techniques"}
+    ]
+  },
+  {
+    "id": "4_tool_use_with_claude",
+    "title": "Tool use with Claude",
+    "lessons": [
+      {"id": "4_introducing_tool_use", "title": "Introducing tool use"},
+      {"id": "4_project_overview", "title": "Project overview"},
+      {"id": "4_tool_functions", "title": "Tool functions"},
+      {"id": "4_tool_schemas", "title": "Tool schemas"},
+      {"id": "4_handling_message_blocks", "title": "Handling message blocks"},
+      {"id": "4_sending_tool_results", "title": "Sending tool results"},
+      {"id": "4_multi_turn_conversations_tools", "title": "Multi-turn conversations with tools"},
+      {"id": "4_implementing_multiple_turns", "title": "Implementing multiple turns"},
+      {"id": "4_using_multiple_tools", "title": "Using multiple tools"},
+      {"id": "4_fine_grained_tool_calling", "title": "Fine grained tool calling"},
+      {"id": "4_the_text_edit_tool", "title": "The text edit tool"},
+      {"id": "4_the_web_search_tool", "title": "The web search tool"},
+      {"id": "4_quiz_tool_use", "title": "Quiz on tool use with Claude"}
+    ]
+  },
+  {
+    "id": "5_rag_and_agentic_search",
+    "title": "RAG and Agentic Search",
+    "lessons": [
+      {"id": "5_introducing_rag", "title": "Introducing Retrieval Augmented Generation"},
+      {"id": "5_text_chunking_strategies", "title": "Text chunking strategies"},
+      {"id": "5_text_embeddings", "title": "Text embeddings"},
+      {"id": "5_full_rag_flow", "title": "The full RAG flow"},
+      {"id": "5_implementing_rag_flow", "title": "Implementing the RAG flow"},
+      {"id": "5_bm25_lexical_search", "title": "BM25 lexical search"},
+      {"id": "5_multi_index_rag_pipeline", "title": "A Multi-Index RAG pipeline"}
+    ]
+  },
+  {
+    "id": "6_features_of_claude",
+    "title": "Features of Claude",
+    "lessons": [
+      {"id": "6_extended_thinking", "title": "Extended thinking"},
+      {"id": "6_image_support", "title": "Image support"},
+      {"id": "6_pdf_support", "title": "PDF support"},
+      {"id": "6_citations", "title": "Citations"},
+      {"id": "6_prompt_caching", "title": "Prompt caching"},
+      {"id": "6_rules_of_prompt_caching", "title": "Rules of prompt caching"},
+      {"id": "6_prompt_caching_in_action", "title": "Prompt caching in action"},
+      {"id": "6_code_execution_files_api", "title": "Code execution and the Files API"},
+      {"id": "6_quiz_features", "title": "Quiz on features of Claude"}
+    ]
+  },
+  {
+    "id": "7_model_context_protocol",
+    "title": "Model Context Protocol",
+    "lessons": [
+      {"id": "7_introducing_mcp", "title": "Introducing MCP"},
+      {"id": "7_mcp_clients", "title": "MCP clients"},
+      {"id": "7_project_setup", "title": "Project setup"},
+      {"id": "7_defining_tools_with_mcp", "title": "Defining tools with MCP"},
+      {"id": "7_the_server_inspector", "title": "The server inspector"},
+      {"id": "7_implementing_a_client", "title": "Implementing a client"},
+      {"id": "7_defining_resources", "title": "Defining resources"},
+      {"id": "7_accessing_resources", "title": "Accessing resources"},
+      {"id": "7_defining_prompts", "title": "Defining prompts"},
+      {"id": "7_prompts_in_the_client", "title": "Prompts in the client"},
+      {"id": "7_mcp_review", "title": "MCP review"},
+      {"id": "7_quiz_mcp", "title": "Quiz on Model Context Protocol"}
+    ]
+  },
+  {
+    "id": "8_anthropic_apps",
+    "title": "Anthropic apps - Claude Code and computer use",
+    "lessons": [
+      {"id": "8_anthropic_apps", "title": "Anthropic apps"},
+      {"id": "8_claude_code_setup", "title": "Claude Code setup"},
+      {"id": "8_claude_code_in_action", "title": "Claude Code in action"},
+      {"id": "8_enhancements_with_mcp_servers", "title": "Enhancements with MCP servers"}
+    ]
+  },
+  {
+    "id": "9_agents_and_workflows",
+    "title": "Agents and workflows",
+    "lessons": [
+      {"id": "9_agents_and_workflows", "title": "Agents and workflows"},
+      {"id": "9_parallelization_workflows", "title": "Parallelization workflows"},
+      {"id": "9_chaining_workflows", "title": "Chaining workflows"},
+      {"id": "9_routing_workflows", "title": "Routing workflows"},
+      {"id": "9_agents_and_tools", "title": "Agents and tools"},
+      {"id": "9_environment_inspection", "title": "Environment inspection"},
+      {"id": "9_workflows_vs_agents", "title": "Workflows vs agents"},
+      {"id": "9_quiz_agents_workflows", "title": "Quiz on Agents and Workflow"}
+    ]
+  }
+]

@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 from anthropic import Anthropic
 from prompts import run_diet_planner_prompt
+from routes import LESSON_ROUTES
 
 # Load env variables (assuming .env is in the parent parent directory where the training repo is)
 load_dotenv(dotenv_path="../../.env")
@@ -80,33 +81,48 @@ def update_chat(updated_chat: dict):
     db.append(updated_chat)
     save_db(db)
 
+def get_curriculum():
+    if not os.path.exists("curriculum.json"):
+        return []
+    with open("curriculum.json", "r", encoding="utf-8") as f:
+        try:
+            return json.load(f)
+        except json.JSONDecodeError:
+            return []
+
+def get_lesson_by_id(lesson_id: str) -> Optional[dict]:
+    curr = get_curriculum()
+    for proj in curr:
+        for lesson in proj["lessons"]:
+            if lesson["id"] == lesson_id:
+                return lesson
+    return None
+
 # API Endpoints
-@app.get("/api/history")
-def get_history():
-    db = load_db()
-    # Return minimal info for the sidebar
-    return [{"id": chat["id"], "title": chat["title"], "context": chat["context"]} for chat in reversed(db)]
+@app.get("/api/curriculum")
+def get_curriculum_endpoint():
+    return get_curriculum()
 
 @app.get("/api/chat/{chat_id}")
 def get_chat_session(chat_id: str):
     chat = get_chat(chat_id)
     if not chat:
-        raise HTTPException(status_code=404, detail="Chat not found")
+        lesson = get_lesson_by_id(chat_id)
+        if not lesson:
+            raise HTTPException(status_code=404, detail="Lesson not found")
+        
+        chat = {
+            "id": chat_id,
+            "title": lesson["title"],
+            "context": chat_id,
+            "created_at": datetime.now().isoformat(),
+            "messages": []
+        }
+        db = load_db()
+        db.append(chat)
+        save_db(db)
+        
     return chat
-
-@app.post("/api/chat")
-def create_chat(req: CreateChatRequest):
-    new_chat = {
-        "id": str(uuid.uuid4()),
-        "title": f"New Chat ({req.context})",
-        "context": req.context,
-        "created_at": datetime.now().isoformat(),
-        "messages": []
-    }
-    db = load_db()
-    db.append(new_chat)
-    save_db(db)
-    return new_chat
 
 @app.post("/api/message")
 def send_message(req: SendMessageRequest):
@@ -117,53 +133,62 @@ def send_message(req: SendMessageRequest):
     # Add user message
     user_msg = {"role": "user", "content": req.content}
     chat["messages"].append(user_msg)
+    # Title remains the lesson title, so we remove the title updating logic
     
-    # Update title based on first message if it's "New Chat"
-    if chat["title"].startswith("New Chat"):
-        chat["title"] = req.content[:30] + ("..." if len(req.content) > 30 else "")
-
     try:
-        # Check if the user is in the Prompting context
-        if chat["context"].endswith("001_prompting"):
-            # Use Claude to extract parameters
-            extractor_prompt = f"""
-            Extract these parameters from the user's text: height (cm), weight (kg), goal, restrictions.
-            Return ONLY valid JSON like: {{"height": "160", "weight": "60", "goal": "lose weight", "restrictions": "none"}}
-            If a parameter is not mentioned, use "unknown".
-            User text: {req.content}
-            """
+        context_key = chat["context"]
+        route = LESSON_ROUTES.get(context_key, {})
+        
+        if "extractor_prompt" in route and "generator_func" in route:
+            # 1. Extraction Phase
+            extractor_prompt = route["extractor_prompt"].format(user_input=req.content)
             extract_res = anthropic_client.messages.create(
-                model="claude-3-haiku-20240307",
-                max_tokens=200,
+                model="claude-haiku-4-5",
+                max_tokens=150,
                 messages=[{"role": "user", "content": extractor_prompt}],
                 temperature=0
             )
-            params = json.loads(extract_res.content[0].text)
             
-            # Run the Diet Planner prompt template
-            final_prompt = run_diet_planner_prompt(
-                str(params.get("height", "unknown")),
-                str(params.get("weight", "unknown")),
-                str(params.get("goal", "unknown")),
-                str(params.get("restrictions", "none"))
-            )
+            raw_text = extract_res.content[0].text
+            import re
+            match = re.search(r'\{.*\}', raw_text, re.DOTALL)
+            if match:
+                raw_text = match.group(0)
+                
+            # Fallback for missing keys specific to diet planner
+            try:
+                params = json.loads(raw_text)
+                if context_key == "3_promt/001_prompting":
+                    params = {
+                        "height": str(params.get("height", "unknown")),
+                        "weight": str(params.get("weight", "unknown")),
+                        "goal": str(params.get("goal", "unknown")),
+                        "restrictions": str(params.get("restrictions", "none"))
+                    }
+            except:
+                params = {}
             
-            # Send the generated prompt to Claude
+            # 2. Generation Phase
+            final_prompt = route["generator_func"](**params)
+            
+            max_tokens = route.get("max_tokens", 1000)
             response = anthropic_client.messages.create(
-                model="claude-3-5-haiku-20241022",
-                max_tokens=1000,
+                model="claude-haiku-4-5",
+                max_tokens=max_tokens,
                 messages=[{"role": "user", "content": final_prompt}],
                 temperature=1.0
             )
             bot_text = response.content[0].text
             
         else:
-            # Generic chat fallback for other contexts
-            system_prompt = "You are Monooka AI, a helpful assistant."
+            # Standard chat with custom or generic system prompt
+            system_prompt = route.get("system_prompt", "You are Monooka AI, a helpful assistant.")
             api_messages = [{"role": m["role"], "content": m["content"]} for m in chat["messages"]]
+            
+            max_tokens = route.get("max_tokens", 500)
             response = anthropic_client.messages.create(
-                model="claude-3-5-haiku-20241022",
-                max_tokens=1000,
+                model="claude-haiku-4-5",
+                max_tokens=max_tokens,
                 system=system_prompt,
                 messages=api_messages
             )
