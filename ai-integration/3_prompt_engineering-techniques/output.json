@@ -1,0 +1,64 @@
+[
+  {
+    "output": "# 1-Day Meal Plan for Weight Maintenance\n\n**Total: 1,950 kcal | Protein: 95g | Carbs: 235g | Fat: 65g**\n\n---\n\n## BREAKFAST (7:00 AM) \u2014 450 kcal\n- 1 cup oatmeal (40g dry) with water\n- 1 medium banana\n- 2 tbsp peanut butter\n- Pinch of salt\n\n*P: 16g | C: 55g | F: 18g*\n\n---\n\n## LUNCH (12:30 PM) \u2014 550 kcal\n- 150g chicken breast (boiled/pan-fried)\n- 1 cup cooked white rice\n- 1 cup steamed broccoli\n- 1 tsp olive oil for cooking\n\n*P: 40g | C: 60g | F: 10g*\n\n---\n\n## SNACK (4:00 PM) \u2014 200 kcal\n- 1 cup plain Greek yogurt (non-fat)\n- \u00bd cup granola\n- 10 almonds\n\n*P: 20g | C: 25g | F: 5g*\n\n---\n\n## DINNER (7:00 PM) \u2014 750 kcal\n- 170g ground beef (90/10 lean)\n- 2 medium potatoes (boiled, mashed)\n- 1 cup mixed vegetables (frozen okay)\n- 1 tbsp olive oil for cooking\n\n*P: 35g | C: 75g | F: 32g*\n\n---\n\n## Budget Breakdown\nOats, rice, chicken, beef, potatoes, frozen vegetables, peanut butter, yogurt, banana, almonds = ~$14\u2013$15 (varies by location/sales)",
+    "test_case": {
+      "prompt_inputs": {
+        "height": "165",
+        "weight": "62",
+        "goal": "Maintain current weight while eating nutritious meals on a $15 daily budget",
+        "restrictions": "None"
+      },
+      "solution_criteria": [
+        "Total cost of all meals does not exceed $15",
+        "Meal plan includes breakfast, lunch, and dinner with adequate calories and macronutrients",
+        "All ingredients are affordable and shelf-stable or require minimal refrigeration"
+      ],
+      "task_description": "Write a compact, concise 1 day meal plan for a single woman",
+      "scenario": "Testing with budget optimization: Single woman on a tight budget of $15 total for the entire day's meals, requiring the plan to use affordable, shelf-stable ingredients while maintaining adequate nutrition"
+    },
+    "score": 8,
+    "reasoning": "The solution fully satisfies all three mandatory requirements: it provides daily caloric total, complete macronutrient breakdown, and meals with exact foods, portions, and timing. The budget estimate is plausible given ingredient selection, though unverified. The meal plan is nutritionally adequate for weight maintenance, though the carb-heavy macro split could be optimized. The inclusion of a snack as a labeled meal adds structure. However, the lack of itemized cost verification and suboptimal macro ratios prevent this from being an exemplary solution. The solution meets all stated criteria without exceeding requirements."
+  },
+  {
+    "output": "# 1-Day Meal Plan for Busy Woman\n\n**Stats & Goals:** 165cm, 68kg \u2192 Maintain weight, healthy eating, gluten-free, vegetarian\n\n---\n\n## **DAILY TOTALS: 1,950 kcal | 75g protein | 240g carbs | 65g fat**\n\n---\n\n## **MEALS**\n\n### **BREAKFAST - 7:00 AM** (420 kcal)\n- Greek yogurt (200g) with honey (1 tbsp)\n- Mixed berries (100g)\n- Gluten-free granola (40g)\n- Ground flaxseed (1 tbsp)\n\n### **SNACK - 10:30 AM** (180 kcal)\n- Apple (1 medium)\n- Almond butter (1.5 tbsp)\n\n### **LUNCH - 1:00 PM** (520 kcal)\n- Quinoa salad:\n  - Cooked quinoa (150g)\n  - Chickpeas (1 cup)\n  - Spinach (2 cups)\n  - Cherry tomatoes (150g)\n  - Cucumber (100g)\n  - Olive oil dressing (1 tbsp)\n  - Lemon juice\n\n### **SNACK - 4:00 PM** (160 kcal)\n- Hummus (\u00bc cup)\n- Gluten-free crackers (8 pieces)\n- Bell pepper strips (100g)\n\n### **DINNER - 7:00 PM** (670 kcal)\n- Baked sweet potato (250g)\n- Lentil bolognese:\n  - Cooked lentils (1 cup)\n  - Low-sugar marinara sauce (200ml)\n  - Garlic & herbs\n- Side salad with balsamic vinegar (2 cups mixed greens)\n\n---\n\n**Quick prep tip:** Cook quinoa & lentils in bulk on Sunday; assemble salads as needed.",
+    "test_case": {
+      "prompt_inputs": {
+        "height": "165",
+        "weight": "68",
+        "goal": "maintain weight while eating healthy despite busy schedule",
+        "restrictions": "no gluten, prefers vegetarian options"
+      },
+      "solution_criteria": [
+        "All meals are prepared or assembled in 15 minutes or less",
+        "Plan includes nutritionally balanced breakfast, lunch, and dinner with no-cook or minimal-prep options",
+        "All meals comply with gluten-free and vegetarian restrictions",
+        "Meals are satisfying and suitable for weight maintenance goals"
+      ],
+      "task_description": "Write a compact, concise 1 day meal plan for a single woman",
+      "scenario": "Testing with extreme time constraints: Busy professional woman with only 15 minutes available per meal, requiring quick-prep or no-cook options that are still nutritious and satisfying"
+    },
+    "score": 7,
+    "reasoning": "The solution meets all three mandatory requirements with clear presentation of daily totals, macronutrient breakdown, and detailed meals with portions and timing. It successfully adheres to both dietary restrictions (gluten-free and vegetarian). However, there is a material gap between the stated criterion ('All meals are prepared or assembled in 15 minutes or less') and the actual execution. The lentil bolognese requires cooking time that exceeds 15 minutes, and the solution relies on bulk Sunday prep rather than demonstrating that each meal can be quickly assembled on the day. While the bulk prep strategy is practical for a busy schedule, it doesn't satisfy the literal requirement that meals be 'prepared or assembled in 15 minutes or less.' This represents a secondary criteria violation that prevents a higher score."
+  },
+  {
+    "output": "# 1-Day Vegan Meal Plan (62 kg, Maintenance)\n\n**Total: 1,850 kcal | Protein: 65g | Carbs: 245g | Fat: 58g**\n\n---\n\n## **Breakfast (7:00 AM) \u2014 380 kcal**\n- Oatmeal: 50g dry oats with 240ml unsweetened soy milk\n- Banana: 1 medium (120g)\n- Tahini: 1 tbsp (15g)\n- Cinnamon & water to prepare\n\n*P: 12g | C: 55g | F: 12g*\n\n---\n\n## **Lunch (12:30 PM) \u2014 520 kcal**\n- Chickpea & vegetable bowl:\n  - Cooked chickpeas: 150g (drained)\n  - Brown rice: 75g cooked\n  - Spinach: 80g raw\n  - Bell pepper: 100g\n  - Cucumber: 80g\n  - Olive oil dressing: 1 tbsp (15ml)\n  - Lemon juice & sea salt\n\n*P: 18g | C: 65g | F: 16g*\n\n---\n\n## **Snack (3:30 PM) \u2014 200 kcal**\n- Hummus: 60g (made from sesame/tahini)\n- Carrot sticks: 150g\n- Whole grain crackers: 30g\n\n*P: 8g | C: 22g | F: 8g*\n\n---\n\n## **Dinner (7:00 PM) \u2014 750 kcal**\n- Tofu stir-fry:\n  - Firm tofu: 200g (pressed & cubed)\n  - Broccoli: 150g\n  - Mushrooms: 100g\n  - Bok choy: 100g\n  - Coconut oil: 1.5 tbsp (22ml)\n  - Low-sodium tamari: 2 tbsp\n  - Garlic & ginger\n- Quinoa: 65g cooked\n\n*P: 27g | C: 103g | F: 22g*\n\n---\n\n## **Key Notes:**\n\u2713 **Protein sources:** Tofu, chickpeas, oats, tahini, legumes (no nuts due to allergy)  \n\u2713 **All prepared separately** to avoid cross-contamination  \n\u2713 **Hydration:** 2-3L water daily  \n\u2713 **B12 supplement:** Recommended for vegans (take daily)",
+    "test_case": {
+      "prompt_inputs": {
+        "height": "165",
+        "weight": "62",
+        "goal": "Maintain current weight with balanced nutrition",
+        "restrictions": "Vegan diet, nut allergy, avoid cross-contamination"
+      },
+      "solution_criteria": [
+        "All meals are completely plant-based with no animal products",
+        "All meals are safe for nut allergies with no nuts or nut-derived ingredients",
+        "Meal plan covers breakfast, lunch, dinner, and snacks for one full day",
+        "Plan is compact and concise (under 400 words)"
+      ],
+      "task_description": "Write a compact, concise 1 day meal plan for a single woman",
+      "scenario": "Testing with dietary restrictions: Single woman following a vegan diet with a nut allergy, ensuring all meals are plant-based, nutritionally balanced, and safe from cross-contamination concerns"
+    },
+    "score": 9,
+    "reasoning": "The solution successfully meets all mandatory requirements with clear daily totals, macronutrient breakdowns, and properly portioned meals with timing. It adheres to vegan and nut-allergy restrictions without compromise. The plan is appropriately concise. Secondary criteria are largely satisfied: all meals are plant-based, nut-safe, and cover the full day. Minor weaknesses include slightly conservative caloric targeting and generic cross-contamination guidance, but these do not constitute failures against stated criteria. The solution is well-structured, practical, and directly addresses the task inputs."
+  }
+]

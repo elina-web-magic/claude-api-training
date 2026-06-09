@@ -1,0 +1,35 @@
+[
+  {
+    "prompt_inputs": {},
+    "solution_criteria": [
+      "System returns a clear error message or default response indicating missing task description",
+      "System does not crash or produce undefined behavior",
+      "Response gracefully explains what information is needed to proceed"
+    ],
+    "task_description": "",
+    "scenario": "Testing with an empty or null task description to verify error handling and graceful fallback behavior"
+  },
+  {
+    "prompt_inputs": {
+      "patient_presentation": "A 34-year-old female presents with a 6-month history of progressive proximal muscle weakness, particularly in the hip and shoulder girdles, accompanied by dysphagia and a heliotrope rash across her eyelids and upper chest. Laboratory findings show elevated creatine kinase (8,500 U/L), positive anti-Jo-1 antibodies, and mild interstitial lung disease on high-resolution CT. She reports recent onset of Raynaud's phenomenon and joint pain in her hands.",
+      "clinical_context": "The patient has no prior autoimmune disease history, denies malignancy screening in the past 5 years, and works as a florist with potential environmental exposures. Family history includes maternal rheumatoid arthritis."
+    },
+    "solution_criteria": [
+      "Identifies the primary diagnosis with supporting clinical and serological evidence",
+      "Lists at least three key diagnostic criteria met by this presentation",
+      "Recommends appropriate next diagnostic or monitoring steps given the clinical complexity"
+    ],
+    "task_description": "",
+    "scenario": "Testing with a highly specific, niche task description (e.g., testing a prompt about rare disease diagnosis) to ensure scenario generation remains relevant and creative despite domain complexity"
+  },
+  {
+    "prompt_inputs": {},
+    "solution_criteria": [
+      "Generates multiple distinct test scenarios that address different interpretations of an ambiguous task",
+      "Each scenario includes clear inputs and expected outcomes despite the vague requirements",
+      "Demonstrates flexibility in handling uncertainty by creating varied test cases rather than requesting clarification"
+    ],
+    "task_description": "",
+    "scenario": "Testing with a vague, open-ended task description to assess how the system generates diverse test scenarios when requirements are ambiguous"
+  }
+]

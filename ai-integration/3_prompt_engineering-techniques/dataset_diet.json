@@ -1,0 +1,49 @@
+[
+  {
+    "prompt_inputs": {
+      "height": "165",
+      "weight": "62",
+      "goal": "Maintain current weight while eating nutritious meals on a $15 daily budget",
+      "restrictions": "None"
+    },
+    "solution_criteria": [
+      "Total cost of all meals does not exceed $15",
+      "Meal plan includes breakfast, lunch, and dinner with adequate calories and macronutrients",
+      "All ingredients are affordable and shelf-stable or require minimal refrigeration"
+    ],
+    "task_description": "Write a compact, concise 1 day meal plan for a single woman",
+    "scenario": "Testing with budget optimization: Single woman on a tight budget of $15 total for the entire day's meals, requiring the plan to use affordable, shelf-stable ingredients while maintaining adequate nutrition"
+  },
+  {
+    "prompt_inputs": {
+      "height": "165",
+      "weight": "62",
+      "goal": "Maintain current weight with balanced nutrition",
+      "restrictions": "Vegan diet, nut allergy, avoid cross-contamination"
+    },
+    "solution_criteria": [
+      "All meals are completely plant-based with no animal products",
+      "All meals are safe for nut allergies with no nuts or nut-derived ingredients",
+      "Meal plan covers breakfast, lunch, dinner, and snacks for one full day",
+      "Plan is compact and concise (under 400 words)"
+    ],
+    "task_description": "Write a compact, concise 1 day meal plan for a single woman",
+    "scenario": "Testing with dietary restrictions: Single woman following a vegan diet with a nut allergy, ensuring all meals are plant-based, nutritionally balanced, and safe from cross-contamination concerns"
+  },
+  {
+    "prompt_inputs": {
+      "height": "165",
+      "weight": "68",
+      "goal": "maintain weight while eating healthy despite busy schedule",
+      "restrictions": "no gluten, prefers vegetarian options"
+    },
+    "solution_criteria": [
+      "All meals are prepared or assembled in 15 minutes or less",
+      "Plan includes nutritionally balanced breakfast, lunch, and dinner with no-cook or minimal-prep options",
+      "All meals comply with gluten-free and vegetarian restrictions",
+      "Meals are satisfying and suitable for weight maintenance goals"
+    ],
+    "task_description": "Write a compact, concise 1 day meal plan for a single woman",
+    "scenario": "Testing with extreme time constraints: Busy professional woman with only 15 minutes available per meal, requiring quick-prep or no-cook options that are still nutritious and satisfying"
+  }
+]
