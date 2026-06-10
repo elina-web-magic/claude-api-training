@@ -1,64 +1,64 @@
 [
   {
-    "output": "# 1-Day Meal Plan for Weight Maintenance\n\n**Total: 1,950 kcal | Protein: 95g | Carbs: 235g | Fat: 65g**\n\n---\n\n## BREAKFAST (7:00 AM) \u2014 450 kcal\n- 1 cup oatmeal (40g dry) with water\n- 1 medium banana\n- 2 tbsp peanut butter\n- Pinch of salt\n\n*P: 16g | C: 55g | F: 18g*\n\n---\n\n## LUNCH (12:30 PM) \u2014 550 kcal\n- 150g chicken breast (boiled/pan-fried)\n- 1 cup cooked white rice\n- 1 cup steamed broccoli\n- 1 tsp olive oil for cooking\n\n*P: 40g | C: 60g | F: 10g*\n\n---\n\n## SNACK (4:00 PM) \u2014 200 kcal\n- 1 cup plain Greek yogurt (non-fat)\n- \u00bd cup granola\n- 10 almonds\n\n*P: 20g | C: 25g | F: 5g*\n\n---\n\n## DINNER (7:00 PM) \u2014 750 kcal\n- 170g ground beef (90/10 lean)\n- 2 medium potatoes (boiled, mashed)\n- 1 cup mixed vegetables (frozen okay)\n- 1 tbsp olive oil for cooking\n\n*P: 35g | C: 75g | F: 32g*\n\n---\n\n## Budget Breakdown\nOats, rice, chicken, beef, potatoes, frozen vegetables, peanut butter, yogurt, banana, almonds = ~$14\u2013$15 (varies by location/sales)",
-    "test_case": {
-      "prompt_inputs": {
-        "height": "165",
-        "weight": "62",
-        "goal": "Maintain current weight while eating nutritious meals on a $15 daily budget",
-        "restrictions": "None"
-      },
-      "solution_criteria": [
-        "Total cost of all meals does not exceed $15",
-        "Meal plan includes breakfast, lunch, and dinner with adequate calories and macronutrients",
-        "All ingredients are affordable and shelf-stable or require minimal refrigeration"
-      ],
-      "task_description": "Write a compact, concise 1 day meal plan for a single woman",
-      "scenario": "Testing with budget optimization: Single woman on a tight budget of $15 total for the entire day's meals, requiring the plan to use affordable, shelf-stable ingredients while maintaining adequate nutrition"
-    },
-    "score": 8,
-    "reasoning": "The solution fully satisfies all three mandatory requirements: it provides daily caloric total, complete macronutrient breakdown, and meals with exact foods, portions, and timing. The budget estimate is plausible given ingredient selection, though unverified. The meal plan is nutritionally adequate for weight maintenance, though the carb-heavy macro split could be optimized. The inclusion of a snack as a labeled meal adds structure. However, the lack of itemized cost verification and suboptimal macro ratios prevent this from being an exemplary solution. The solution meets all stated criteria without exceeding requirements."
-  },
-  {
-    "output": "# 1-Day Meal Plan for Busy Woman\n\n**Stats & Goals:** 165cm, 68kg \u2192 Maintain weight, healthy eating, gluten-free, vegetarian\n\n---\n\n## **DAILY TOTALS: 1,950 kcal | 75g protein | 240g carbs | 65g fat**\n\n---\n\n## **MEALS**\n\n### **BREAKFAST - 7:00 AM** (420 kcal)\n- Greek yogurt (200g) with honey (1 tbsp)\n- Mixed berries (100g)\n- Gluten-free granola (40g)\n- Ground flaxseed (1 tbsp)\n\n### **SNACK - 10:30 AM** (180 kcal)\n- Apple (1 medium)\n- Almond butter (1.5 tbsp)\n\n### **LUNCH - 1:00 PM** (520 kcal)\n- Quinoa salad:\n  - Cooked quinoa (150g)\n  - Chickpeas (1 cup)\n  - Spinach (2 cups)\n  - Cherry tomatoes (150g)\n  - Cucumber (100g)\n  - Olive oil dressing (1 tbsp)\n  - Lemon juice\n\n### **SNACK - 4:00 PM** (160 kcal)\n- Hummus (\u00bc cup)\n- Gluten-free crackers (8 pieces)\n- Bell pepper strips (100g)\n\n### **DINNER - 7:00 PM** (670 kcal)\n- Baked sweet potato (250g)\n- Lentil bolognese:\n  - Cooked lentils (1 cup)\n  - Low-sugar marinara sauce (200ml)\n  - Garlic & herbs\n- Side salad with balsamic vinegar (2 cups mixed greens)\n\n---\n\n**Quick prep tip:** Cook quinoa & lentils in bulk on Sunday; assemble salads as needed.",
+    "output": "# One-Day Meal Plan for Vegetarian Athlete (Weight Loss)\n\n**CALORIC TARGET: 1,850 kcal**\n**MACRONUTRIENT BREAKDOWN:**\n- Protein: 110g (24%)\n- Carbohydrates: 220g (48%)\n- Fat: 51g (25%)\n- Fiber: 35g\n\n---\n\n## MEAL SCHEDULE\n\n### BREAKFAST (7:00 AM) \u2014 420 kcal\n- **Oatmeal with Plant-Based Protein**\n  - Rolled oats: 50g\n  - Unsweetened almond milk: 240ml\n  - Vegan protein powder (vanilla): 25g\n  - Banana: 1 medium (100g)\n  - Ground flaxseed: 1 tbsp (10g)\n  - Cinnamon: 1 tsp\n\n*Nutrition: 420 kcal | 18g protein | 52g carbs | 12g fat*\n\n---\n\n### MID-MORNING SNACK (10:00 AM) \u2014 180 kcal\n- **Smoothie**\n  - Unsweetened almond milk: 250ml\n  - Vegan protein powder (chocolate): 20g\n  - Frozen berries: 80g\n  - Natural almond butter: 1 tbsp (16g)\n\n*Nutrition: 180 kcal | 18g protein | 18g carbs | 7g fat*\n\n---\n\n### LUNCH (1:00 PM) \u2014 520 kcal\n- **Mediterranean Chickpea Bowl**\n  - Cooked quinoa: 150g\n  - Canned chickpeas (drained): 150g\n  - Cherry tomatoes: 150g (halved)\n  - Cucumber: 150g (diced)\n  - Red bell pepper: 100g (sliced)\n  - Kalamata olives: 20g\n  - Extra virgin olive oil: 1 tbsp (15ml)\n  - Lemon juice & garlic seasoning\n  - Fresh parsley: 10g\n\n*Nutrition: 520 kcal | 18g protein | 65g carbs | 18g fat*\n\n---\n\n### PRE-WORKOUT SNACK (3:30 PM) \u2014 160 kcal\n- **Energy Bites**\n  - Dates (pitted): 60g (3-4 pieces)\n  - Raw almonds: 23g (~16 nuts)\n\n*Nutrition: 160 kcal | 5g protein | 20g carbs | 8g fat*\n\n---\n\n### DINNER (6:30 PM) \u2014 470 kcal\n- **Lentil & Vegetable Stir-Fry**\n  - Cooked green lentils: 200g\n  - Broccoli: 250g\n  - Mushrooms: 150g\n  - Carrots: 100g\n  - Garlic: 2 cloves\n  - Sesame oil: 1 tbsp (15ml)\n  - Low-sodium soy sauce: 1.5 tbsp\n  - Ginger: 5g (minced)\n  - Sesame seeds: 1 tbsp (9g)\n  - Jasmine rice: 50g (uncooked weight)\n\n*Nutrition: 470 kcal | 22g protein | 62g carbs | 12g fat*\n\n---\n\n### EVENING SNACK (8:30 PM) \u2014 100 kcal\n- **Herbal Tea & Snack**\n  - Chamomile tea: 240ml\n  - Whole grain toast: 1 slice (30g)\n  - Tahini spread: 1 tsp (5g)\n\n*Nutrition: 100 kcal | 4g protein | 12g carbs | 3g fat*\n\n---\n\n## NUTRITION SUMMARY\n\n| Metric | Target | Actual |\n|--------|--------|--------|\n| **Total Calories** | 1,850 | 1,850 |\n| **Protein (g)",
     "test_case": {
       "prompt_inputs": {
         "height": "165",
         "weight": "68",
-        "goal": "maintain weight while eating healthy despite busy schedule",
-        "restrictions": "no gluten, prefers vegetarian options"
+        "goal": "weight loss",
+        "restrictions": "vegetarian, no dairy"
       },
       "solution_criteria": [
-        "All meals are prepared or assembled in 15 minutes or less",
-        "Plan includes nutritionally balanced breakfast, lunch, and dinner with no-cook or minimal-prep options",
-        "All meals comply with gluten-free and vegetarian restrictions",
-        "Meals are satisfying and suitable for weight maintenance goals"
+        "All three meals (breakfast, lunch, dinner) can be prepared in under 30 minutes each",
+        "Meal plan is nutritionally balanced and supports weight loss goal",
+        "All recipes comply with vegetarian and dairy-free restrictions",
+        "Includes specific meal names and basic preparation instructions"
       ],
       "task_description": "Write a compact, concise 1 day meal plan for a single woman",
-      "scenario": "Testing with extreme time constraints: Busy professional woman with only 15 minutes available per meal, requiring quick-prep or no-cook options that are still nutritious and satisfying"
+      "scenario": "Testing with time constraints: Generate a meal plan for a busy professional woman with minimal cooking time available, focusing on quick-prep meals and assessing whether recipes can realistically be prepared in under 30 minutes each"
     },
-    "score": 7,
-    "reasoning": "The solution meets all three mandatory requirements with clear presentation of daily totals, macronutrient breakdown, and detailed meals with portions and timing. It successfully adheres to both dietary restrictions (gluten-free and vegetarian). However, there is a material gap between the stated criterion ('All meals are prepared or assembled in 15 minutes or less') and the actual execution. The lentil bolognese requires cooking time that exceeds 15 minutes, and the solution relies on bulk Sunday prep rather than demonstrating that each meal can be quickly assembled on the day. While the bulk prep strategy is practical for a busy schedule, it doesn't satisfy the literal requirement that meals be 'prepared or assembled in 15 minutes or less.' This represents a secondary criteria violation that prevents a higher score."
+    "score": 6,
+    "reasoning": "The solution successfully meets all three mandatory requirements with precise caloric totals, comprehensive macronutrient breakdowns, and detailed meals with exact portions and timing. Dietary restrictions are perfectly adhered to throughout. However, it critically fails to address the preparation time criterion from the secondary criteria\u2014no preparation instructions or time estimates are provided for any meal, making it impossible to verify compliance with the '30 minutes each' requirement. Additionally, the inclusion of 6 eating occasions rather than the traditional 3 meals may not align with the 'compact, concise' language in the task description. The solution is nutritionally sound and well-structured but incomplete regarding practical execution details."
   },
   {
-    "output": "# 1-Day Vegan Meal Plan (62 kg, Maintenance)\n\n**Total: 1,850 kcal | Protein: 65g | Carbs: 245g | Fat: 58g**\n\n---\n\n## **Breakfast (7:00 AM) \u2014 380 kcal**\n- Oatmeal: 50g dry oats with 240ml unsweetened soy milk\n- Banana: 1 medium (120g)\n- Tahini: 1 tbsp (15g)\n- Cinnamon & water to prepare\n\n*P: 12g | C: 55g | F: 12g*\n\n---\n\n## **Lunch (12:30 PM) \u2014 520 kcal**\n- Chickpea & vegetable bowl:\n  - Cooked chickpeas: 150g (drained)\n  - Brown rice: 75g cooked\n  - Spinach: 80g raw\n  - Bell pepper: 100g\n  - Cucumber: 80g\n  - Olive oil dressing: 1 tbsp (15ml)\n  - Lemon juice & sea salt\n\n*P: 18g | C: 65g | F: 16g*\n\n---\n\n## **Snack (3:30 PM) \u2014 200 kcal**\n- Hummus: 60g (made from sesame/tahini)\n- Carrot sticks: 150g\n- Whole grain crackers: 30g\n\n*P: 8g | C: 22g | F: 8g*\n\n---\n\n## **Dinner (7:00 PM) \u2014 750 kcal**\n- Tofu stir-fry:\n  - Firm tofu: 200g (pressed & cubed)\n  - Broccoli: 150g\n  - Mushrooms: 100g\n  - Bok choy: 100g\n  - Coconut oil: 1.5 tbsp (22ml)\n  - Low-sodium tamari: 2 tbsp\n  - Garlic & ginger\n- Quinoa: 65g cooked\n\n*P: 27g | C: 103g | F: 22g*\n\n---\n\n## **Key Notes:**\n\u2713 **Protein sources:** Tofu, chickpeas, oats, tahini, legumes (no nuts due to allergy)  \n\u2713 **All prepared separately** to avoid cross-contamination  \n\u2713 **Hydration:** 2-3L water daily  \n\u2713 **B12 supplement:** Recommended for vegans (take daily)",
+    "output": "# One-Day Meal Plan for Vegetarian Athlete\n\n**Athlete Profile:**\n- Height: 165 cm | Weight: 68 kg | Goal: Weight maintenance with balanced nutrition\n- Dietary restrictions: Vegetarian, nut allergy\n\n---\n\n## **DAILY NUTRITIONAL SUMMARY**\n\n**Total: 2,480 kcal**\n\n**Macronutrient Breakdown:**\n- **Protein: 110g** (18% of calories)\n- **Carbohydrates: 310g** (50% of calories)\n- **Fat: 75g** (27% of calories)\n\n*This provides adequate protein for athletic recovery while emphasizing carbohydrates for energy.*\n\n---\n\n## **MEAL PLAN**\n\n### **BREAKFAST | 7:00 AM | 580 kcal**\n- Greek yogurt (200g) with honey drizzle (1 tbsp)\n- Granola (50g, nut-free)\n- Blueberries (100g)\n- Whole grain toast (2 slices) with almond butter alternative: tahini (1.5 tbsp)\n\n**Macros:** 22g protein | 72g carbs | 18g fat\n\n---\n\n### **MID-MORNING SNACK | 10:00 AM | 280 kcal**\n- Protein smoothie:\n  - Plant-based protein powder (30g)\n  - Banana (1 medium)\n  - Oat milk (250ml)\n  - Oats (40g)\n  - Berries (50g frozen)\n\n**Macros:** 25g protein | 38g carbs | 5g fat\n\n---\n\n### **LUNCH | 12:30 PM | 650 kcal**\n- Quinoa & chickpea buddha bowl:\n  - Cooked quinoa (150g cooked weight)\n  - Canned chickpeas (120g drained)\n  - Roasted sweet potato (150g)\n  - Spinach (50g)\n  - Cucumber (100g)\n  - Carrot (80g)\n  - Tahini-lemon dressing (2 tbsp tahini, lemon juice)\n  - Whole grain pita bread (1)\n\n**Macros:** 18g protein | 95g carbs | 16g fat\n\n---\n\n### **PRE-WORKOUT SNACK | 3:30 PM | 220 kcal**\n- Rice cakes (2) with jam (2 tbsp)\n- Apple (1 medium)\n- Water\n\n**Macros:** 3g protein | 52g carbs | 1g fat\n\n---\n\n### **DINNER | 7:00 PM | 750 kcal**\n- Lentil & vegetable stir-fry:\n  - Red lentils (150g cooked)\n  - Tofu (150g firm, pan-fried in olive oil)\n  - Broccoli (150g)\n  - Bell pepper (1 medium)\n  - Mushrooms (100g)\n  - Brown rice (180g cooked)\n  - Low-sodium soy sauce, garlic, ginger\n  - Cooking oil (2 tsp)\n\n**Macros:** 35g protein | 95g carbs | 18g fat\n\n---\n\n### **EVENING SNACK | 8:30 PM | 200 kcal**\n- Cottage cheese (150g, low-fat)\n- Pineapple chunks (120g)\n- Sunflower seeds (15g)\n\n**Macros:** 17g protein | 18g carbs | 7g fat\n\n---\n\n## **HYDRATION NOTES**\n- Drink 2.5-3 liters of water throughout the day\n- Add electrolytes if training duration exceeds 60 minutes\n\n## **KEY BENEFITS**\n\u2713 Meets protein needs for muscle recovery without nuts  \n\u2713 High carbohydrate intake supports athletic performance  \n\u2713 Balanced micronutrients from varied whole foods  \n\u2713 Sustainable meal timing for energy throughout the day",
     "test_case": {
       "prompt_inputs": {
         "height": "165",
-        "weight": "62",
-        "goal": "Maintain current weight with balanced nutrition",
-        "restrictions": "Vegan diet, nut allergy, avoid cross-contamination"
+        "weight": "68",
+        "goal": "balanced nutrition and weight maintenance",
+        "restrictions": "vegetarian, nut allergy"
       },
       "solution_criteria": [
-        "All meals are completely plant-based with no animal products",
-        "All meals are safe for nut allergies with no nuts or nut-derived ingredients",
-        "Meal plan covers breakfast, lunch, dinner, and snacks for one full day",
-        "Plan is compact and concise (under 400 words)"
+        "All meals are vegetarian with no meat, poultry, or fish",
+        "No nuts or nut-derived ingredients in any meal",
+        "Meal plan is compact and covers breakfast, lunch, and dinner for one day",
+        "Nutritionally balanced with adequate protein, carbohydrates, and healthy fats from non-nut sources"
       ],
       "task_description": "Write a compact, concise 1 day meal plan for a single woman",
-      "scenario": "Testing with dietary restrictions: Single woman following a vegan diet with a nut allergy, ensuring all meals are plant-based, nutritionally balanced, and safe from cross-contamination concerns"
+      "scenario": "Testing with dietary restrictions: Create a meal plan for a woman with vegetarian preferences and a nut allergy, verifying that the plan avoids all restricted ingredients while maintaining nutritional balance"
     },
-    "score": 9,
-    "reasoning": "The solution successfully meets all mandatory requirements with clear daily totals, macronutrient breakdowns, and properly portioned meals with timing. It adheres to vegan and nut-allergy restrictions without compromise. The plan is appropriately concise. Secondary criteria are largely satisfied: all meals are plant-based, nut-safe, and cover the full day. Minor weaknesses include slightly conservative caloric targeting and generic cross-contamination guidance, but these do not constitute failures against stated criteria. The solution is well-structured, practical, and directly addresses the task inputs."
+    "score": 8,
+    "reasoning": "The solution fully satisfies all mandatory requirements with precise daily totals, macronutrient breakdowns, and detailed meal specifications with portions and timing. All secondary criteria are met: meals are vegetarian, nut-free, compact, and nutritionally balanced. The primary concern is that the caloric and macronutrient targets appear optimized for an athlete rather than derived from the stated goal of 'balanced nutrition and weight maintenance' for a general individual. However, this represents a mismatch in assumptions rather than a violation of the stated criteria. The solution is well-executed, clear, and technically sound."
+  },
+  {
+    "output": "# One-Day Meal Plan for Budget-Conscious Athlete\n\n**ATHLETE PROFILE:**\n- Height: 165 cm | Weight: 68 kg | Activity Level: Athlete\n- Goal: Weight maintenance on tight budget\n- Restrictions: No nuts or shellfish; vegetarian preference when affordable\n\n---\n\n## **DAILY NUTRITIONAL SUMMARY**\n**Total: 2,150 kcal**\n\n**Macronutrient Breakdown:**\n- **Protein:** 95g (18% of calories)\n- **Carbohydrates:** 280g (52% of calories)\n- **Fat:** 48g (20% of calories)\n\n---\n\n## **MEAL PLAN**\n\n### **BREAKFAST | 7:00 AM**\n- 1 cup oatmeal (dry measure) cooked with water: 150g cooked\n- 1 banana (medium): 105g\n- 2 tbsp peanut butter alternative (sunflower seed butter): 32g\n- \u00bd cup whole milk: 120ml\n\n**Calories: 580 | Protein: 18g | Carbs: 70g | Fat: 20g**\n\n---\n\n### **MID-MORNING SNACK | 10:00 AM**\n- 1 slice whole wheat bread: 28g\n- 1 tbsp sunflower seed butter: 16g\n- \u00bd apple (medium): 85g\n\n**Calories: 240 | Protein: 8g | Carbs: 28g | Fat: 10g**\n\n---\n\n### **LUNCH | 12:30 PM**\n- 1 cup cooked lentils (dried): 198g\n- \u00be cup cooked white rice: 150g\n- 1 medium carrot, steamed: 60g\n- 1 tsp olive oil for cooking: 5ml\n- \u00bc tsp salt and pepper\n\n**Calories: 480 | Protein: 22g | Carbs: 85g | Fat: 6g**\n\n---\n\n### **POST-WORKOUT SNACK | 3:00 PM** *(30-45 min after training)*\n- 1 cup low-fat Greek yogurt (plain): 227g\n- \u00bd cup granola (budget brand): 50g\n- 1 tbsp honey: 21g\n\n**Calories: 320 | Protein: 20g | Carbs: 52g | Fat: 3g**\n\n---\n\n### **DINNER | 6:30 PM**\n- 2 large eggs, scrambled: 100g\n- 1 cup cooked pasta (whole wheat): 140g\n- 2 cups fresh spinach, saut\u00e9ed in 1 tsp olive oil: 60g oil\n- \u2153 cup canned diced tomatoes: 80g\n- Garlic and Italian seasoning to taste\n\n**Calories: 450 | Protein: 22g | Carbs: 42g | Fat: 9g**\n\n---\n\n### **EVENING SNACK | 8:30 PM** *(Optional, if hungry)*\n- 1 slice whole wheat toast: 28g\n- 2 tbsp cottage cheese (budget brand): 30g\n- 1 tsp jam: 5g\n\n**Calories: 100 | Protein: 5g | Carbs: 18g | Fat: 0g**\n\n---\n\n## **BUDGET-FRIENDLY NOTES**\n\n**Cost-Saving Strategies Used:**\n\u2713 Oats, lentils, and rice (buy in bulk)\n\u2713 Eggs and Greek yogurt (affordable protein)\n\u2713 Seasonal/frozen vegetables\n\u2713 Sunflower seed butter (cheaper nut alternative)\n\u2713 Store-brand products\n\u2713 Minimal processed foods\n\n**Estimated Daily Cost: $5-7 USD** (depending on location)\n\n---\n\n## **HYDRATION REMINDER**\n- Drink 2.5-3L of water throughout the day\n- Include electrolyte drink if training > 60 minutes\n\nThis plan supports athletic performance while maintaining current weight and respecting budget constraints.",
+    "test_case": {
+      "prompt_inputs": {
+        "height": "165",
+        "weight": "68",
+        "goal": "maintain weight on a tight grocery budget",
+        "restrictions": "no nuts or shellfish allergies; prefers vegetarian options when budget-friendly"
+      },
+      "solution_criteria": [
+        "All meals use affordable, widely-available ingredients costing under $15 total for the day",
+        "Meal plan minimizes food waste by reusing ingredients across multiple meals",
+        "Provides balanced nutrition meeting basic daily caloric and macronutrient needs for weight maintenance"
+      ],
+      "task_description": "Write a compact, concise 1 day meal plan for a single woman",
+      "scenario": "Testing with budget consciousness: Design a meal plan for a single woman operating on a tight grocery budget, ensuring all meals are cost-effective and use affordable, accessible ingredients while avoiding food waste"
+    },
+    "score": 8,
+    "reasoning": "The solution fully satisfies all three mandatory requirements with clear presentation of daily totals, macronutrient percentages, and detailed meal specifications with portions and timing. Ingredient reuse is excellent (sunflower seed butter, olive oil, whole wheat products, eggs appear multiple times), and the $5-7 budget estimate is realistic and well-justified. However, the 'athlete' classification appears unsupported by task inputs and may overestimate caloric needs for weight maintenance. The nut allergy handling is somewhat contradictory despite the workaround. The vegetarian emphasis, while budget-friendly, doesn't fully explore the stated conditional preference. These are secondary criterion issues that don't invalidate the core deliverables."
   }
 ]

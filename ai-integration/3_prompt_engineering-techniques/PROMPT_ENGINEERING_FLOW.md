@@ -21,6 +21,25 @@ The Instructions define the specific goal the model must achieve.
 They should be clear, direct, and imperative (like a general giving precise orders to a squad).
 **Why:** ambiguity in instructions leads to hallucinations or unexpected behavior.
 
+### Being Clear and Direct
+
+The first line of your prompt is the most important part of your entire request. When crafting that crucial first line, focus on two key principles: clarity and directness.
+
+**Clear Communication:**
+
+- Use simple language that anyone can understand.
+- State exactly what you want without beating around the bush.
+- Lead with a straightforward statement of the model's task.
+*Instead of:* "I need to know about those things people put on their roofs that use sun - those solar panel things"
+*Use:* "Write three paragraphs about how solar panels work."
+
+**Direct Instructions:**
+
+- Use instructions, not questions.
+- Start with direct action verbs like "Write," "Create," or "Generate."
+*Instead of:* "I was reading about renewable energy and geothermal energy sounds neat. What countries use it?"
+*Use:* "Identify three countries that use geothermal energy. Include generation stats for each."
+
 ## Constraints (Rules)
 
 The Constraints define what the model must NOT do, or strict limits it must follow.
