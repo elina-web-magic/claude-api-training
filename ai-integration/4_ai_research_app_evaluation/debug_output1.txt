@@ -1,0 +1,4347 @@
+=== PROMPT 1: ARCHITECTURE ===
+# AILens - Next.js MVP Backend Architecture
+
+## High-Level System Design
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Client Layer                             │
+│                  (Next.js Frontend)                          │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+        ┌────────────┼────────────┐
+        │            │            │
+┌───────▼──────┐ ┌──▼─────────┐ ┌─▼──────────────┐
+│  API Routes  │ │  Server    │ │ Webhooks/      │
+│  (REST)      │ │ Components │ │ External APIs  │
+└───────┬──────┘ └────────────┘ └────────────────┘
+        │
+        │ (Rate Limited, Auth Required)
+        │
+┌───────▼──────────────────────────────────────────────────────┐
+│              API Authentication & Rate Limiting              │
+│  (Middleware Layer - Security Gate)                         │
+└───────┬──────────────────────────────────────────────────────┘
+        │
+        │
+┌───────▼──────────────────────────────────────────────────────┐
+│              Business Logic Layer (Route Handlers)            │
+│  ├─ User Management                                          │
+│  ├─ AI Processing Pipelines                                 │
+│  ├─ Data Analysis & Insights                                │
+│  └─ Report Generation                                       │
+└───────┬──────────────────────────────────────────────────────┘
+        │
+        │
+┌───────▼──────────────────────────────────────────────────────┐
+│              Data Layer (Prisma ORM)                          │
+│  ├─ Schema Definition                                        │
+│  ├─ Query Builder                                            │
+│  └─ Migration Management                                    │
+└───────┬──────────────────────────────────────────────────────┘
+        │
+        │
+┌───────▼──────────────────────────────────────────────────────┐
+│         Vercel Postgres Database                             │
+│  ├─ Users Table                                              │
+│  ├─ API Keys Table                                           │
+│  ├─ Analysis Jobs Table                                      │
+│  ├─ Audit Logs Table                                         │
+│  └─ Rate Limit Tracking Table                               │
+└───────────────────────────────────────────────────────────────┘
+
+
+┌──────────────────────────────────────────────────────────────┐
+│            Cron Jobs & Scheduled Tasks                        │
+│  (Vercel Cron / External Cron Service)                       │
+│  ├─ Job Processor (with API Key Auth)                        │
+│  ├─ Health Checks                                            │
+│  ├─ Cleanup Tasks                                            │
+│  └─ Report Generation                                        │
+└──────────┬───────────────────────────────────────────────────┘
+           │
+           └──► API Routes (Protected with Secret Key)
+
+
+┌──────────────────────────────────────────────────────────────┐
+│            Error Monitoring & Observability                   │
+│  ├─ Sentry (Error Tracking)                                  │
+│  ├─ Structured Logging                                       │
+│  ├─ Metrics Collection                                       │
+│  └─ Alert System                                             │
+└──────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Project Structure
+
+```
+ailens/
+├── app/
+│   ├── api/
+│   │   ├── auth/
+│   │   │   ├── register/route.ts
+│   │   │   ├── login/route.ts
+│   │   │   └── refresh/route.ts
+│   │   ├── keys/
+│   │   │   ├── route.ts           # CRUD for API keys
+│   │   │   └── [keyId]/route.ts
+│   │   ├── analysis/
+│   │   │   ├── route.ts           # Create analysis job
+│   │   │   └── [jobId]/route.ts   # Get job status
+│   │   ├── cron/
+│   │   │   ├── process-jobs/route.ts      # Job processor
+│   │   │   ├── cleanup/route.ts           # Cleanup old data
+│   │   │   └── health-check/route.ts      # System health
+│   │   └── health/route.ts        # General health endpoint
+│   ├── middleware.ts
+│   ├── layout.tsx
+│   └── page.tsx
+├── lib/
+│   ├── auth/
+│   │   ├── jwt.ts
+│   │   ├── password.ts
+│   │   └── session.ts
+│   ├── security/
+│   │   ├── rate-limiter.ts
+│   │   ├── api-key-validator.ts
+│   │   └── encryption.ts
+│   ├── monitoring/
+│   │   ├── sentry.ts
+│   │   ├── logger.ts
+│   │   └── metrics.ts
+│   ├── ai/
+│   │   ├── processor.ts
+│   │   └── providers/
+│   │       ├── openai.ts
+│   │       └── anthropic.ts
+│   └── utils/
+│       ├── validators.ts
+│       └── helpers.ts
+├── prisma/
+│   ├── schema.prisma
+│   └── migrations/
+├── types/
+│   ├── index.ts
+│   ├── api.ts
+│   └── models.ts
+├── .env.local
+├── package.json
+└── tsconfig.json
+```
+
+---
+
+## 1. Database Schema (Prisma)
+
+```prisma
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ USERS ============
+model User {
+  id                String      @id @default(cuid())
+  email             String      @unique
+  passwordHash      String
+  name              String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  deletedAt         DateTime?
+  
+  // Relations
+  apiKeys           ApiKey[]
+  jobs              AnalysisJob[]
+  auditLogs         AuditLog[]
+  
+  @@index([email])
+}
+
+// ============ API KEYS ============
+model ApiKey {
+  id                String      @id @default(cuid())
+  userId            String
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  key               String      @unique
+  name              String
+  lastUsedAt        DateTime?
+  expiresAt         DateTime?
+  isActive          Boolean     @default(true)
+  createdAt         DateTime    @default(now())
+  
+  rateLimitConfig   RateLimitConfig?
+  
+  @@index([userId])
+  @@index([key])
+}
+
+// ============ RATE LIMITING ============
+model RateLimitConfig {
+  id                String      @id @default(cuid())
+  apiKeyId          String      @unique
+  apiKey            ApiKey      @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  
+  requestsPerMinute Int         @default(60)
+  requestsPerHour   Int         @default(1000)
+  requestsPerDay    Int         @default(10000)
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}
+
+model RateLimitLog {
+  id                String      @id @default(cuid())
+  apiKeyId          String
+  endpoint          String
+  requestCount      Int         @default(1)
+  windowStart       DateTime
+  windowEnd         DateTime
+  
+  createdAt         DateTime    @default(now())
+  
+  @@unique([apiKeyId, endpoint, windowStart])
+  @@index([apiKeyId])
+  @@index([windowStart])
+}
+
+// ============ ANALYSIS JOBS ============
+model AnalysisJob {
+  id                String      @id @default(cuid())
+  userId            String
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title             String
+  description       String?
+  status            JobStatus   @default(PENDING)
+  priority          JobPriority @default(MEDIUM)
+  
+  inputData         Json        // Flexible input structure
+  outputData        Json?       // Results after processing
+  errorMessage      String?
+  
+  processedAt       DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum JobPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// ============ AUDIT LOGS ============
+model AuditLog {
+  id                String      @id @default(cuid())
+  userId            String
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  action            String      // e.g., "API_KEY_CREATED", "JOB_SUBMITTED"
+  resource          String      // e.g., "api_key", "analysis_job"
+  resourceId        String?
+  details           Json?       // Additional context
+  ipAddress         String?
+  userAgent         String?
+  
+  createdAt         DateTime    @default(now())
+  
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// ============ CRON JOB TRACKING ============
+model CronJobRun {
+  id                String      @id @default(cuid())
+  jobName           String      // e.g., "process-jobs", "cleanup"
+  status            JobStatus   @default(PENDING)
+  
+  startedAt         DateTime?
+  completedAt       DateTime?
+  errorMessage      String?
+  
+  createdAt         DateTime    @default(now())
+  
+  @@unique([jobName, createdAt])
+  @@index([jobName])
+  @@index([status])
+}
+
+// ============ FEATURE FLAGS ============
+model FeatureFlag {
+  id                String      @id @default(cuid())
+  key               String      @unique
+  enabled           Boolean     @default(false)
+  description       String?
+  config            Json?
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}
+```
+
+---
+
+## 2. Security Layer
+
+### 2.1 Rate Limiting
+
+```typescript
+// lib/security/rate-limiter.ts
+
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+import prisma from "@/lib/prisma";
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_URL!,
+  token: process.env.UPSTASH_REDIS_TOKEN!,
+});
+
+export interface RateLimitResult {
+  success: boolean;
+  limit: number;
+  remaining: number;
+  reset: number;
+  retryAfter?: number;
+}
+
+/**
+ * Global rate limiter (per IP)
+ */
+export const globalRateLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(100, "1 h"),
+  analytics: true,
+  prefix: "rl:global",
+});
+
+/**
+ * Per-API-Key rate limiter
+ */
+export async function checkApiKeyRateLimit(
+  apiKeyId: string
+): Promise<RateLimitResult> {
+  try {
+    // Get rate limit config for this API key
+    const config = await prisma.rateLimitConfig.findUnique({
+      where: { apiKeyId },
+    });
+
+    if (!config) {
+      return {
+        success: false,
+        limit: 0,
+        remaining: 0,
+        reset: 0,
+      };
+    }
+
+    // Check minute window
+    const now = new Date();
+    const minuteAgo = new Date(now.getTime() - 60 * 1000);
+
+    const minuteLogs = await prisma.rateLimitLog.findMany({
+      where: {
+        apiKeyId,
+        windowStart: {
+          gte: minuteAgo,
+        },
+      },
+    });
+
+    const minuteCount = minuteLogs.reduce((sum, log) => sum + log.requestCount, 0);
+
+    if (minuteCount >= config.requestsPerMinute) {
+      return {
+        success: false,
+        limit: config.requestsPerMinute,
+        remaining: 0,
+        reset: Math.ceil((minuteLogs[0].windowEnd.getTime() - now.getTime()) / 1000),
+        retryAfter: Math.ceil((minuteLogs[0].windowEnd.getTime() - now.getTime()) / 1000),
+      };
+    }
+
+    // Log this request
+    await prisma.rateLimitLog.upsert({
+      where: {
+        apiKeyId_endpoint_windowStart: {
+          apiKeyId,
+          endpoint: "generic",
+          windowStart: new Date(Math.floor(now.getTime() / 60000) * 60000),
+        },
+      },
+      update: {
+        requestCount: {
+          increment: 1,
+        },
+      },
+      create: {
+        apiKeyId,
+        endpoint: "generic",
+        requestCount: 1,
+        windowStart: new Date(Math.floor(now.getTime() / 60000) * 60000),
+        windowEnd: new Date(Math.floor(now.getTime() / 60000) * 60000 + 60000),
+      },
+    });
+
+    return {
+      success: true,
+      limit: config.requestsPerMinute,
+      remaining: Math.max(0, config.requestsPerMinute - minuteCount - 1),
+      reset: Math.ceil((new Date(Math.floor(now.getTime() / 60000) * 60000 + 60000).getTime() - now.getTime()) / 1000),
+    };
+  } catch (error) {
+    console.error("Rate limit check error:", error);
+    // Fail open to avoid blocking legitimate requests
+    return {
+      success: true,
+      limit: 0,
+      remaining: 0,
+      reset: 0,
+    };
+  }
+}
+
+/**
+ * IP-based rate limiting for public endpoints
+ */
+export async function checkIPRateLimit(
+  ip: string
+): Promise<RateLimitResult> {
+  try {
+    const ipRateLimiter = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(30, "1 h"),
+      prefix: `rl:ip:${ip}`,
+    });
+
+    const { success, limit, remaining, reset, retryAfter } = await ipRateLimiter.limit(ip);
+
+    return {
+      success,
+      limit,
+      remaining,
+      reset,
+      retryAfter,
+    };
+  } catch (error) {
+    console.error("IP rate limit check error:", error);
+    return {
+      success: true,
+      limit: 0,
+      remaining: 0,
+      reset: 0,
+    };
+  }
+
+=== PROMPT 2: DATABASE SCHEMA ===
+```prisma
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ USERS ============
+model User {
+  id                    String      @id @default(cuid())
+  email                 String      @unique
+  emailVerified         DateTime?
+  passwordHash          String?
+  name                  String?
+  image                 String?
+  bio                   String?
+  
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  deletedAt             DateTime?
+  
+  // Relations
+  accounts              Account[]
+  sessions              Session[]
+  apiKeys               ApiKey[]
+  articles              Article[]
+  analysisJobs          AnalysisJob[]
+  auditLogs             AuditLog[]
+  notifications         Notification[]
+  
+  @@index([email])
+  @@index([createdAt])
+}
+
+// ============ ACCOUNTS (OAuth/Social Login) ============
+model Account {
+  id                    String      @id @default(cuid())
+  userId                String
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type                  String      // "oauth", "oidc", "credentials"
+  provider              String      // "google", "github", "microsoft", etc.
+  providerAccountId     String
+  
+  // OAuth fields
+  refresh_token         String?     @db.Text
+  access_token          String?     @db.Text
+  expires_at            Int?
+  token_type            String?
+  scope                 String?
+  id_token              String?     @db.Text
+  session_state         String?
+  
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+// ============ SESSIONS ============
+model Session {
+  id                    String      @id @default(cuid())
+  sessionToken          String      @unique
+  userId                String
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  expires               DateTime
+  ipAddress             String?
+  userAgent             String?
+  
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  
+  @@index([userId])
+  @@index([sessionToken])
+  @@index([expires])
+}
+
+// ============ VERIFICATION TOKENS ============
+model VerificationToken {
+  id                    String      @id @default(cuid())
+  email                 String
+  token                 String      @unique
+  type                  String      // "email_verification", "password_reset"
+  expires               DateTime
+  
+  createdAt             DateTime    @default(now())
+  
+  @@unique([email, token])
+  @@index([email])
+}
+
+// ============ API KEYS ============
+model ApiKey {
+  id                    String      @id @default(cuid())
+  userId                String
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  key                   String      @unique
+  name                  String
+  description           String?
+  lastUsedAt            DateTime?
+  expiresAt             DateTime?
+  isActive              Boolean     @default(true)
+  
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  
+  rateLimitConfig       RateLimitConfig?
+  
+  @@index([userId])
+  @@index([key])
+  @@index([isActive])
+}
+
+// ============ RATE LIMITING CONFIG ============
+model RateLimitConfig {
+  id                    String      @id @default(cuid())
+  apiKeyId              String      @unique
+  apiKey                ApiKey      @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  
+  requestsPerMinute     Int         @default(60)
+  requestsPerHour       Int         @default(1000)
+  requestsPerDay        Int         @default(10000)
+  
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+}
+
+// ============ RATE LIMIT LOGS ============
+model RateLimitLog {
+  id                    String      @id @default(cuid())
+  apiKeyId              String
+  endpoint              String
+  requestCount          Int         @default(1)
+  windowStart           DateTime
+  windowEnd             DateTime
+  
+  createdAt             DateTime    @default(now())
+  
+  @@unique([apiKeyId, endpoint, windowStart])
+  @@index([apiKeyId])
+  @@index([windowStart])
+}
+
+// ============ ARTICLES ============
+model Article {
+  id                    String      @id @default(cuid())
+  userId                String
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title                 String
+  slug                  String      @unique
+  description           String?     @db.Text
+  content               String      @db.Text
+  
+  // AI Lens specific fields
+  insights              String      @db.Text     // JSON stringified insights array
+  theme_area            String                    // Primary theme/category (e.g., "Technology", "Health", "Business")
+  mermaidSchema         String      @db.Text     // Mermaid diagram definition for visual representation
+  
+  // Metadata
+  featured              Boolean     @default(false)
+  publishedAt           DateTime?
+  viewCount             Int         @default(0)
+  
+  // Tags and categories
+  tags                  String[]    @default([])  // Array of tag strings
+  category              String?
+  
+  // SEO
+  metaTitle             String?
+  metaDescription       String?
+  metaKeywords          String?
+  
+  // Media
+  coverImage            String?
+  coverImageAlt         String?
+  
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  deletedAt             DateTime?
+  
+  // Relations
+  comments              ArticleComment[]
+  reactions             ArticleReaction[]
+  
+  @@index([userId])
+  @@index([slug])
+  @@index([theme_area])
+  @@index([publishedAt])
+  @@index([createdAt])
+  @@index([featured])
+}
+
+// ============ ARTICLE COMMENTS ============
+model ArticleComment {
+  id                    String      @id @default(cuid())
+  articleId             String
+  article               Article     @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  userId                String
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  parentCommentId       String?
+  parentComment         ArticleComment?  @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies               ArticleComment[] @relation("CommentReplies")
+  
+  content               String      @db.Text
+  isApproved            Boolean     @default(true)
+  
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  deletedAt             DateTime?
+  
+  @@index([articleId])
+  @@index([userId])
+  @@index([parentCommentId])
+}
+
+// ============ ARTICLE REACTIONS ============
+model ArticleReaction {
+  id                    String      @id @default(cuid())
+  articleId             String
+  article               Article     @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  userId                String
+  
+  type                  String      // "like", "love", "insightful", "bookmark"
+  
+  createdAt             DateTime    @default(now())
+  
+  @@unique([articleId, userId, type])
+  @@index([articleId])
+  @@index([type])
+}
+
+// ============ ANALYSIS JOBS ============
+model AnalysisJob {
+  id                    String      @id @default(cuid())
+  userId                String
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title                 String
+  description           String?     @db.Text
+  status                JobStatus   @default(PENDING)
+  priority              JobPriority @default(MEDIUM)
+  
+  inputData             Json        // Flexible input structure
+  outputData            Json?       // Results after processing
+  errorMessage          String?     @db.Text
+  
+  processedAt           DateTime?
+  completedAt           DateTime?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum JobPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// ============ AUDIT LOGS ============
+model AuditLog {
+  id                    String      @id @default(cuid())
+  userId                String
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  action                String      // e.g., "API_KEY_CREATED", "ARTICLE_PUBLISHED", "JOB_SUBMITTED"
+  resource              String      // e.g., "api_key", "article", "analysis_job"
+  resourceId            String?
+  details               Json?       // Additional context
+  ipAddress             String?
+  userAgent             String?
+  
+  createdAt             DateTime    @default(now())
+  
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
+}
+
+// ============ NOTIFICATIONS ============
+model Notification {
+  id                    String      @id @default(cuid())
+  userId                String
+  user                  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type                  String      // "article_published", "comment_reply", "job_completed"
+  title                 String
+  message               String      @db.Text
+  actionUrl             String?
+  
+  isRead                Boolean     @default(false)
+  readAt                DateTime?
+  
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// ============ CRON JOB TRACKING ============
+model CronJobRun {
+  id                    String      @id @default(cuid())
+  jobName               String      // e.g., "process-jobs", "cleanup", "generate-insights"
+  status                JobStatus   @default(PENDING)
+  
+  startedAt             DateTime?
+  completedAt           DateTime?
+  errorMessage          String?     @db.Text
+  
+  createdAt             DateTime    @default(now())
+  
+  @@unique([jobName, createdAt])
+  @@index([jobName])
+  @@index([status])
+}
+
+// ============ FEATURE FLAGS ============
+model FeatureFlag {
+  id                    String      @id @default(cuid())
+  key                   String      @unique
+  enabled               Boolean     @default(false)
+  description           String?
+  config                Json?       // Feature-specific configuration
+  
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+}
+
+// ============ SYSTEM SETTINGS ============
+model SystemSetting {
+  id                    String      @id @default(cuid())
+  key                   String      @unique
+  value                 String      @db.Text
+  type                  String      // "string", "number", "boolean", "json"
+  description           String?
+  
+  updatedAt             DateTime    @updatedAt
+  
+  @@index([key])
+}
+```
+
+=== PROMPT 3: ARXIV FETCHING ===
+```typescript
+// lib/arxiv/fetcher.ts
+
+import { parseStringPromise } from "xml2js";
+import prisma from "@/lib/prisma";
+import { logger } from "@/lib/monitoring/logger";
+import * as Sentry from "@sentry/nextjs";
+
+export interface ArxivArticleRaw {
+  id: string;
+  title: string;
+  summary: string;
+  authors: Array<{
+    name: string;
+  }>;
+  published: string;
+  updated: string;
+  link: string;
+  category: string;
+}
+
+export interface ProcessedArticle {
+  title: string;
+  slug: string;
+  description: string;
+  content: string;
+  insights: string;
+  theme_area: string;
+  mermaidSchema: string;
+  tags: string[];
+  category: string;
+  metaTitle: string;
+  metaDescription: string;
+  metaKeywords: string;
+  coverImage?: string;
+  coverImageAlt?: string;
+  arxivId?: string;
+  arxivUrl?: string;
+}
+
+const ARXIV_RSS_URL = "https://arxiv.org/list/cs.AI/";
+const ARXIV_FEED_URL = "https://arxiv.org/rss/cs.AI";
+
+/**
+ * Fetch and parse ArXiv RSS feed
+ */
+export async function fetchArxivFeed(): Promise<ArxivArticleRaw[]> {
+  try {
+    logger.info("Fetching ArXiv AI feed", { url: ARXIV_FEED_URL });
+
+    const response = await fetch(ARXIV_FEED_URL, {
+      headers: {
+        "User-Agent": "AILens-Bot/1.0 (+https://ailens.app)",
+      },
+      timeout: 30000,
+    });
+
+    if (!response.ok) {
+      throw new Error(`ArXiv feed fetch failed: ${response.status} ${response.statusText}`);
+    }
+
+    const feedContent = await response.text();
+    const parsedFeed = await parseStringPromise(feedContent);
+
+    const articles: ArxivArticleRaw[] = [];
+    const feedItems = parsedFeed.feed?.entry || [];
+
+    for (const item of feedItems) {
+      try {
+        const article = parseArxivEntry(item);
+        if (article) {
+          articles.push(article);
+        }
+      } catch (error) {
+        logger.warn("Failed to parse ArXiv entry", {
+          error: error instanceof Error ? error.message : String(error),
+          entry: JSON.stringify(item).substring(0, 200),
+        });
+        continue;
+      }
+    }
+
+    logger.info("Successfully fetched ArXiv feed", {
+      count: articles.length,
+    });
+
+    return articles;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error("ArXiv feed fetch error", { error: errorMessage });
+    Sentry.captureException(error, {
+      tags: {
+        source: "arxiv-fetcher",
+        operation: "fetchArxivFeed",
+      },
+    });
+    throw error;
+  }
+}
+
+/**
+ * Parse individual ArXiv RSS entry
+ */
+function parseArxivEntry(entry: any): ArxivArticleRaw | null {
+  try {
+    const id = entry.id?.[0] || "";
+    const title = entry.title?.[0]?.trim() || "";
+    const summary = entry.summary?.[0]?.trim() || "";
+    const published = entry.published?.[0] || "";
+    const updated = entry.updated?.[0] || "";
+
+    // Extract arXiv ID from entry ID
+    // Format: http://arxiv.org/abs/2024.01234v1
+    const arxivIdMatch = id.match(/\/(\d+\.\d+)/);
+    const arxivId = arxivIdMatch ? arxivIdMatch[1] : "";
+
+    // Parse authors
+    const authorArray = Array.isArray(entry.author) ? entry.author : [];
+    const authors = authorArray.map((author: any) => ({
+      name: author.name?.[0] || "Unknown",
+    }));
+
+    // Get primary category
+    const category = entry["arxiv:primary-category"]?.[0]?.$.term || "cs.AI";
+
+    // Get link
+    const links = Array.isArray(entry.link) ? entry.link : [];
+    const link =
+      links.find((l: any) => l.$.type === "text/html")?.$.href ||
+      links[0]?.$.href ||
+      `https://arxiv.org/abs/${arxivId}`;
+
+    if (!title || !summary) {
+      logger.warn("ArXiv entry missing required fields", {
+        arxivId,
+        hasTitle: !!title,
+        hasSummary: !!summary,
+      });
+      return null;
+    }
+
+    return {
+      id: arxivId,
+      title,
+      summary,
+      authors,
+      published,
+      updated,
+      link,
+      category,
+    };
+  } catch (error) {
+    logger.warn("Error parsing ArXiv entry", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+}
+
+/**
+ * Check if article already exists in database
+ * Uses multiple deduplication strategies
+ */
+export async function checkDuplicateArticle(
+  arxivId: string,
+  title: string
+): Promise<boolean> {
+  try {
+    // Strategy 1: Check by slug (derived from title + arxiv ID)
+    const slug = generateSlug(title, arxivId);
+
+    const existingArticle = await prisma.article.findFirst({
+      where: {
+        OR: [
+          { slug: slug },
+          {
+            content: {
+              contains: arxivId,
+            },
+          },
+        ],
+      },
+      select: { id: true },
+    });
+
+    if (existingArticle) {
+      logger.info("Duplicate article detected", {
+        arxivId,
+        slug,
+        existingId: existingArticle.id,
+      });
+      return true;
+    }
+
+    // Strategy 2: Check by title similarity (for articles with modified titles)
+    const titleHash = hashString(title);
+    const similarArticle = await prisma.article.findFirst({
+      where: {
+        title: {
+          contains: title.substring(0, 50), // Check first 50 chars
+        },
+      },
+      select: { id: true, title: true },
+    });
+
+    if (similarArticle && calculateSimilarity(similarArticle.title, title) > 0.85) {
+      logger.info("Similar article detected (title match)", {
+        arxivId,
+        existingTitle: similarArticle.title,
+        newTitle: title,
+        similarity: calculateSimilarity(similarArticle.title, title),
+      });
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    logger.error("Error checking for duplicate articles", {
+      error: error instanceof Error ? error.message : String(error),
+      arxivId,
+    });
+    // Fail safe: don't create duplicate if check fails
+    return true;
+  }
+}
+
+/**
+ * Process ArXiv article with AI insights and visualization
+ */
+export async function processArticleWithInsights(
+  article: ArxivArticleRaw
+): Promise<ProcessedArticle> {
+  try {
+    // Generate AI insights using Claude or GPT
+    const insights = await generateInsights(article);
+
+    // Generate theme area
+    const theme_area = determineThemeArea(article);
+
+    // Generate Mermaid schema for visualization
+    const mermaidSchema = generateMermaidSchema(article, insights);
+
+    // Create slug
+    const slug = generateSlug(article.title, article.id);
+
+    // Extract tags from summary and title
+    const tags = extractTags(article);
+
+    // Generate SEO metadata
+    const { metaTitle, metaDescription, metaKeywords } = generateSEOMetadata(article);
+
+    const processed: ProcessedArticle = {
+      title: cleanTitle(article.title),
+      slug,
+      description: article.summary.substring(0, 300),
+      content: article.summary,
+      insights,
+      theme_area,
+      mermaidSchema,
+      tags,
+      category: article.category,
+      metaTitle,
+      metaDescription,
+      metaKeywords,
+      arxivId: article.id,
+      arxivUrl: article.link,
+    };
+
+    return processed;
+  } catch (error) {
+    logger.error("Error processing article with insights", {
+      error: error instanceof Error ? error.message : String(error),
+      arxivId: article.id,
+    });
+    Sentry.captureException(error, {
+      tags: {
+        source: "arxiv-processor",
+        operation: "processArticleWithInsights",
+      },
+      extra: {
+        arxivId: article.id,
+        title: article.title,
+      },
+    });
+    throw error;
+  }
+}
+
+/**
+ * Generate AI-powered insights from article
+ */
+async function generateInsights(article: ArxivArticleRaw): Promise<string> {
+  try {
+    // This would integrate with your AI provider (OpenAI, Anthropic, etc.)
+    const prompt = `
+Analyze this AI research paper and provide 3-5 key insights in JSON array format:
+
+Title: ${article.title}
+Summary: ${article.summary.substring(0, 500)}
+
+Return ONLY a valid JSON array of strings, each insight should be 1-2 sentences.
+Example format: ["Insight 1", "Insight 2", "Insight 3"]
+    `;
+
+    // Replace with your actual AI provider call
+    const insights = await callAIProvider(prompt);
+
+    // Validate JSON
+    const parsedInsights = JSON.parse(insights);
+    if (!Array.isArray(parsedInsights)) {
+      throw new Error("Invalid insights format");
+    }
+
+    return JSON.stringify(parsedInsights);
+  } catch (error) {
+    logger.warn("Error generating insights, using default", {
+      error: error instanceof Error ? error.message : String(error),
+      arxivId: article.id,
+    });
+
+    // Fallback insights
+    const defaultInsights = [
+      `Advances in ${article.category} research`,
+      `Potential applications in industry and academia`,
+      `Contributes to the broader AI/ML ecosystem`,
+    ];
+
+    return JSON.stringify(defaultInsights);
+  }
+}
+
+/**
+ * Determine primary theme/area for article
+ */
+function determineThemeArea(article: ArxivArticleRaw): string {
+  const categoryMap: Record<string, string> = {
+    "cs.AI": "Artificial Intelligence",
+    "cs.LG": "Machine Learning",
+    "cs.CV": "Computer Vision",
+    "cs.NLP": "Natural Language Processing",
+    "cs.RO": "Robotics",
+    "cs.CL": "Computational Linguistics",
+    "stat.ML": "Statistical Machine Learning",
+  };
+
+  const theme = categoryMap[article.category] || "Artificial Intelligence";
+
+  // Check title/summary for specific indicators
+  const lowerContent = `${article.title} ${article.summary}`.toLowerCase();
+
+  if (lowerContent.includes("vision") || lowerContent.includes("image")) {
+    return "Computer Vision";
+  }
+  if (
+    lowerContent.includes("language") ||
+    lowerContent.includes("nlp") ||
+    lowerContent.includes("text")
+  ) {
+    return "Natural Language Processing";
+  }
+  if (lowerContent.includes("robot") || lowerContent.includes("control")) {
+    return "Robotics";
+  }
+  if (
+    lowerContent.includes("security") ||
+    lowerContent.includes("adversarial") ||
+    lowerContent.includes("attack")
+  ) {
+    return "AI Security";
+  }
+  if (lowerContent.includes("graph") || lowerContent.includes("network")) {
+    return "Graph Neural Networks";
+  }
+
+  return theme;
+}
+
+/**
+ * Generate Mermaid diagram schema for article visualization
+ */
+function generateMermaidSchema(article: ArxivArticleRaw, insights: string): string {
+  try {
+    const parsedInsights = JSON.parse(insights);
+    const insightCount = Math.min(parsedInsights.length, 3);
+
+    // Create a mind map or flowchart based on article content
+    const mermaidDiagram = `graph TD
+    A["${article.title.substring(0, 50)}..."]
+    A --> B["Research Category<br/>${article.category}"]
+    A --> C["Key Insights"]
+    ${parsedInsights
+      .slice(0, insightCount)
+      .map((insight: string, i: number) => `C --> I${i}["${insight.substring(0, 40)}..."]`)
+      .join("\n    ")}
+    A --> D["Authors"]
+    D --> E["${article.authors[0]?.name || "Research Team"}"]
+    style A fill:#e1f5ff
+    style C fill:#fff3e0
+    `;
+
+    return mermaidDiagram;
+  } catch (error) {
+    logger.warn("Error generating Mermaid schema", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    // Fallback simple diagram
+    return `graph TD
+    A["${article.title.substring(0, 50)}..."]
+    A --> B["${article.category}"]
+    A --> C["Research Content"]
+    style A fill:#e1f5ff
+    `;
+  }
+}
+
+/**
+ * Extract relevant tags from article
+ */
+function extractTags(article: ArxivArticleRaw): string[] {
+  const tags = new Set<string>();
+
+  // Add category
+  const categoryMap: Record<string, string> = {
+    "cs.AI": "ai",
+    "cs.LG": "machine-learning",
+    "cs.CV": "computer-vision",
+    "cs.NLP": "nlp",
+    "cs.RO": "robotics",
+  };
+
+  tags.add(categoryMap[article.category] || "ai");
+
+  // Extract from title
+  const titleLower = article.title.toLowerCase();
+  const titleKeywords = ["neural", "deep", "learning", "network", "model", "algorithm"];
+  titleKeywords.forEach((keyword) => {
+    if (titleLower.includes(keyword)) {
+      tags.add(keyword);
+    }
+  });
+
+  // Extract from summary
+  const summaryLower = article.summary.toLowerCase();
+  const summaryKeywords = [
+    "transformer",
+    "llm",
+    "vision",
+    "bert",
+    "gpt",
+    "training",
+    "optimization",
+  ];
+  summaryKeywords.forEach((keyword) => {
+    if (summaryLower.includes(keyword)) {
+      tags.add(keyword);
+    }
+  });
+
+  // Add arxiv category prefix
+  tags.add(`arxiv-${article.category.replace(".", "-").toLowerCase()}`);
+
+  return Array.from(tags).slice(0, 10); // Limit to 10 tags
+}
+
+/**
+ * Generate SEO metadata
+ */
+function generateSEOMetadata(article: ArxivArticleRaw): {
+  metaTitle: string;
+  metaDescription: string;
+  metaKeywords: string;
+} {
+  return {
+    metaTitle: `${cleanTitle(article.title)} - AILens Research`,
+    metaDescription: article.summary.substring(0, 155),
+    metaKeywords: `${article.category}, AI, machine learning, research, arxiv`,
+  };
+}
+
+/**
+ * Clean and normalize article title
+ */
+function cleanTitle(title: string): string {
+  return title
+    .replace(/[\n\r]/g, " ")
+    .replace(/\s+/
+
+=== PROMPT 4: PROMPT DESIGN ===
+```typescript
+// lib/ai/anthropic-prompts.ts
+
+import Anthropic from "@anthropic-ai/sdk";
+import { logger } from "@/lib/monitoring/logger";
+import * as Sentry from "@sentry/nextjs";
+
+export interface ExtractedArticleData {
+  themeArea: "Web Development" | "Software Development" | "Data Science" | "Other";
+  hashtags: string[];
+  simplifiedExplanation: string;
+  mermaidSchema: string;
+  promptExamples: string[];
+}
+
+const client = new Anthropic();
+
+const VALID_THEME_AREAS = ["Web Development", "Software Development", "Data Science", "Other"];
+
+/**
+ * Extract structured data from ArXiv article using Claude
+ * CRITICAL: Returns ONLY raw JSON, no Markdown formatting
+ */
+export async function extractArticleDataWithClaude(
+  articleTitle: string,
+  articleSummary: string,
+  arxivCategory: string
+): Promise<ExtractedArticleData> {
+  try {
+    logger.info("Extracting article data with Claude", {
+      title: articleTitle.substring(0, 50),
+      category: arxivCategory,
+    });
+
+    const systemPrompt = buildSystemPrompt();
+    const userPrompt = buildUserPrompt(articleTitle, articleSummary, arxivCategory);
+
+    const response = await client.messages.create({
+      model: "claude-3-5-sonnet-20241022",
+      max_tokens: 2048,
+      system: systemPrompt,
+      messages: [
+        {
+          role: "user",
+          content: userPrompt,
+        },
+      ],
+    });
+
+    // Extract text content
+    const rawContent =
+      response.content[0].type === "text" ? response.content[0].text : "";
+
+    // Parse and validate JSON
+    const parsedData = parseAndValidateJSON(rawContent);
+    const validatedData = validateExtractedData(parsedData);
+
+    logger.info("Successfully extracted article data", {
+      title: articleTitle.substring(0, 50),
+      themeArea: validatedData.themeArea,
+      hashtagCount: validatedData.hashtags.length,
+    });
+
+    return validatedData;
+  } catch (error) {
+    logger.error("Error extracting article data with Claude", {
+      error: error instanceof Error ? error.message : String(error),
+      title: articleTitle.substring(0, 50),
+    });
+
+    Sentry.captureException(error, {
+      tags: {
+        source: "anthropic-extractor",
+        operation: "extractArticleDataWithClaude",
+      },
+      extra: {
+        title: articleTitle.substring(0, 100),
+        category: arxivCategory,
+      },
+    });
+
+    throw error;
+  }
+}
+
+/**
+ * Build the system prompt for Claude
+ * Emphasizes JSON output and validation rules
+ */
+function buildSystemPrompt(): string {
+  return `You are an expert AI research analyst specializing in categorizing and explaining technical papers.
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. Output ONLY raw, valid JSON. NO Markdown code blocks (no backticks, no "json" prefix)
+2. Your response must be parseable by JSON.parse() immediately
+3. Do NOT include any text before or after the JSON
+4. Do NOT use markdown formatting like \`\`\`json
+5. Ensure all strings are properly escaped
+6. Ensure all quotes are double quotes
+7. No trailing commas in objects or arrays
+8. All required fields must be present
+
+You must extract and return EXACTLY this JSON structure (no extra fields):
+{
+  "themeArea": "string",
+  "hashtags": ["string"],
+  "simplifiedExplanation": "string",
+  "mermaidSchema": "string",
+  "promptExamples": ["string"]
+}
+
+VALIDATION RULES:
+- themeArea MUST be exactly one of: "Web Development", "Software Development", "Data Science", "Other"
+- hashtags MUST be an array of 5-8 lowercase hashtag strings starting with #
+- simplifiedExplanation MUST be 2-3 sentences explaining the concept for a 10-year-old
+- mermaidSchema MUST be a valid Mermaid flowchart (wrap in quotes, escape newlines as \\n)
+- promptExamples MUST be an array of exactly 3 practical prompt examples
+
+STRICT JSON FORMAT RULES:
+- Always use double quotes for strings
+- Escape special characters: use \\" for quotes, \\n for newlines, \\\\ for backslashes
+- No comments allowed in JSON
+- No undefined or null values
+- Keep mermaidSchema as a single string with \\n for line breaks
+- Never output anything except valid JSON`;
+}
+
+/**
+ * Build the user prompt with article context
+ */
+function buildUserPrompt(
+  articleTitle: string,
+  articleSummary: string,
+  arxivCategory: string
+): string {
+  // Sanitize inputs to prevent injection
+  const sanitizedTitle = articleTitle.replace(/"/g, '\\"').substring(0, 500);
+  const sanitizedSummary = articleSummary.replace(/"/g, '\\"').substring(0, 1000);
+  const sanitizedCategory = arxivCategory.replace(/"/g, '\\"');
+
+  return `Analyze this research paper and extract structured data:
+
+PAPER TITLE: "${sanitizedTitle}"
+
+PAPER SUMMARY: "${sanitizedSummary}"
+
+ARXIV CATEGORY: "${sanitizedCategory}"
+
+Extract and return ONLY the JSON response with these rules:
+
+1. THEME AREA (themeArea field):
+   - Analyze the paper's primary focus
+   - Map to one of: "Web Development", "Software Development", "Data Science", "Other"
+   - Web Development: Front-end, React, Vue, Angular, CSS, HTML, browser tech
+   - Software Development: Backend systems, architecture, compilers, databases, DevOps, distributed systems
+   - Data Science: Machine Learning, neural networks, data analysis, statistics, deep learning
+   - Other: Everything else that doesn't fit above categories
+
+2. HASHTAGS (hashtags array):
+   - Generate 5-8 relevant lowercase hashtags (must start with #)
+   - Include both general and specific technical tags
+   - Examples: #machine-learning, #neural-networks, #pytorch, #nlp, #research
+
+3. SIMPLIFIED EXPLANATION (simplifiedExplanation field):
+   - Write 2-3 sentences explaining this paper for a 10-year-old child
+   - Use simple analogies and everyday language
+   - Avoid technical jargon
+   - Focus on the "why it matters" aspect
+
+4. MERMAID FLOWCHART (mermaidSchema field):
+   - Create a valid Mermaid flowchart showing the paper's main concepts
+   - Start with "graph TD" (top-down flow)
+   - Include 5-8 key concepts as nodes
+   - Show relationships with arrows
+   - Use proper Mermaid syntax
+   - Return as single string with \\n for newlines
+   - Example structure:
+     A["Paper Title"]
+     A --> B["Key Concept 1"]
+     B --> C["Implementation"]
+     C --> D["Results"]
+
+5. PROMPT EXAMPLES (promptExamples array):
+   - Generate exactly 3 practical examples of prompts that would use this research
+   - Format: Array of 3 strings
+   - Examples should be realistic and actionable
+   - Each should be 1-2 sentences
+
+Return ONLY valid JSON, nothing else.`;
+}
+
+/**
+ * Parse and validate JSON from Claude response
+ */
+function parseAndValidateJSON(rawContent: string): Record<string, unknown> {
+  try {
+    // Remove any potential markdown formatting
+    let cleanedContent = rawContent.trim();
+
+    // Remove markdown code block markers if present
+    if (cleanedContent.startsWith("```json")) {
+      cleanedContent = cleanedContent.substring(7);
+    }
+    if (cleanedContent.startsWith("```")) {
+      cleanedContent = cleanedContent.substring(3);
+    }
+    if (cleanedContent.endsWith("```")) {
+      cleanedContent = cleanedContent.substring(0, cleanedContent.length - 3);
+    }
+
+    cleanedContent = cleanedContent.trim();
+
+    // Validate JSON structure
+    if (!cleanedContent.startsWith("{")) {
+      throw new Error("Response does not start with opening brace");
+    }
+
+    if (!cleanedContent.endsWith("}")) {
+      throw new Error("Response does not end with closing brace");
+    }
+
+    // Parse JSON
+    const parsed = JSON.parse(cleanedContent);
+
+    // Validate it's an object
+    if (typeof parsed !== "object" || parsed === null) {
+      throw new Error("Parsed content is not a JSON object");
+    }
+
+    return parsed;
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    logger.error("JSON parsing error", {
+      error: errorMsg,
+      contentLength: rawContent.length,
+      contentPreview: rawContent.substring(0, 200),
+    });
+    throw new Error(`Failed to parse JSON response: ${errorMsg}`);
+  }
+}
+
+/**
+ * Validate and sanitize extracted data
+ */
+function validateExtractedData(data: Record<string, unknown>): ExtractedArticleData {
+  try {
+    // Validate themeArea
+    const themeArea = validateThemeArea(data.themeArea);
+    if (!themeArea) {
+      throw new Error("Invalid or missing themeArea");
+    }
+
+    // Validate hashtags
+    const hashtags = validateHashtags(data.hashtags);
+    if (hashtags.length === 0) {
+      throw new Error("Invalid or missing hashtags");
+    }
+
+    // Validate simplifiedExplanation
+    const simplifiedExplanation = validateSimplifiedExplanation(data.simplifiedExplanation);
+    if (!simplifiedExplanation) {
+      throw new Error("Invalid or missing simplifiedExplanation");
+    }
+
+    // Validate mermaidSchema
+    const mermaidSchema = validateMermaidSchema(data.mermaidSchema);
+    if (!mermaidSchema) {
+      throw new Error("Invalid or missing mermaidSchema");
+    }
+
+    // Validate promptExamples
+    const promptExamples = validatePromptExamples(data.promptExamples);
+    if (promptExamples.length === 0) {
+      throw new Error("Invalid or missing promptExamples");
+    }
+
+    return {
+      themeArea,
+      hashtags,
+      simplifiedExplanation,
+      mermaidSchema,
+      promptExamples,
+    };
+  } catch (error) {
+    logger.error("Data validation error", {
+      error: error instanceof Error ? error.message : String(error),
+      dataKeys: Object.keys(data),
+    });
+    throw error;
+  }
+}
+
+/**
+ * Validate themeArea field
+ */
+function validateThemeArea(
+  value: unknown
+): "Web Development" | "Software Development" | "Data Science" | "Other" | null {
+  if (typeof value !== "string") {
+    logger.warn("themeArea is not a string", { type: typeof value });
+    return "Other";
+  }
+
+  const trimmed = value.trim();
+
+  if (VALID_THEME_AREAS.includes(trimmed)) {
+    return trimmed as typeof VALID_THEME_AREAS[number];
+  }
+
+  logger.warn("themeArea value not in valid list", {
+    value: trimmed,
+    valid: VALID_THEME_AREAS,
+  });
+
+  // Attempt fuzzy matching
+  const lowerValue = trimmed.toLowerCase();
+
+  if (lowerValue.includes("web")) return "Web Development";
+  if (lowerValue.includes("software")) return "Software Development";
+  if (lowerValue.includes("data")) return "Data Science";
+
+  return "Other";
+}
+
+/**
+ * Validate hashtags array
+ */
+function validateHashtags(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    logger.warn("hashtags is not an array", { type: typeof value });
+    return [];
+  }
+
+  const validated: string[] = [];
+
+  for (const tag of value) {
+    if (typeof tag !== "string") {
+      logger.warn("hashtag item is not a string", { type: typeof tag });
+      continue;
+    }
+
+    let cleaned = tag.trim().toLowerCase();
+
+    // Remove leading/trailing spaces and special chars
+    cleaned = cleaned.replace(/^[^#a-z0-9]*(#)?/, "#").replace(/[^a-z0-9-#]$/g, "");
+
+    // Ensure it starts with #
+    if (!cleaned.startsWith("#")) {
+      cleaned = "#" + cleaned;
+    }
+
+    // Validate format: #word(-word)*
+    if (/^#[a-z0-9]+(-[a-z0-9]+)*$/.test(cleaned) && cleaned.length > 1) {
+      validated.push(cleaned);
+    }
+  }
+
+  // Ensure we have at least 3 hashtags
+  if (validated.length < 3) {
+    logger.warn("Insufficient valid hashtags", { count: validated.length });
+    // Add default hashtags
+    validated.push("#research", "#ai", "#arxiv");
+  }
+
+  return validated.slice(0, 10); // Max 10 hashtags
+}
+
+/**
+ * Validate simplifiedExplanation field
+ */
+function validateSimplifiedExplanation(value: unknown): string {
+  if (typeof value !== "string") {
+    logger.warn("simplifiedExplanation is not a string", { type: typeof value });
+    return "This is an advanced research paper explaining new concepts in AI.";
+  }
+
+  const trimmed = value.trim();
+
+  if (trimmed.length < 20) {
+    logger.warn("simplifiedExplanation too short", { length: trimmed.length });
+    return "This is an advanced research paper with important findings.";
+  }
+
+  if (trimmed.length > 500) {
+    return trimmed.substring(0, 500).trim() + ".";
+  }
+
+  return trimmed;
+}
+
+/**
+ * Validate mermaidSchema field
+ */
+function validateMermaidSchema(value: unknown): string {
+  if (typeof value !== "string") {
+    logger.warn("mermaidSchema is not a string", { type: typeof value });
+    return 'graph TD\n  A["Research Paper"]\n  A --> B["Key Concepts"]\n  B --> C["Implementation"]\n  C --> D["Results"]';
+  }
+
+  let schema = value.trim();
+
+  // Validate it's a valid Mermaid graph
+  if (!schema.startsWith("graph")) {
+    logger.warn("mermaidSchema does not start with 'graph'", { schema: schema.substring(0, 50) });
+    return 'graph TD\n  A["Research Paper"]\n  A --> B["Key Concepts"]';
+  }
+
+  // Handle escaped newlines
+  schema = schema.replace(/\\n/g, "\n");
+
+  // Validate basic structure
+  if (!schema.includes("-->") && !schema.includes("-")) {
+    logger.warn("mermaidSchema missing graph connections");
+    return 'graph TD\n  A["Research"]\n  A --> B["Analysis"]';
+  }
+
+  // Return with escaped newlines for storage
+  return schema.replace(/\n/g, "\\n");
+}
+
+/**
+ * Validate promptExamples array
+ */
+function validatePromptExamples(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    logger.warn("promptExamples is not an array", { type: typeof value });
+    return [
+      "Can you explain the main research question?",
+      "How could this research be applied in practice?",
+      "What are the limitations of this approach?",
+    ];
+  }
+
+  const validated: string[] = [];
+
+  for (const example of value) {
+    if (typeof example !== "string") {
+      logger.warn("promptExample item is not a string", { type: typeof example });
+      continue;
+    }
+
+    const trimmed = example.trim();
+
+    // Validate length
+    if (trimmed
+
+=== PROMPT 5: CLAUDE API INTEGRATION ===
+```typescript
+// lib/ai/claude-client.ts
+
+import Anthropic from "@anthropic-ai/sdk";
+import { logger } from "@/lib/monitoring/logger";
+import * as Sentry from "@sentry/nextjs";
+
+export interface ClaudeExtractionResult {
+  themeArea: "Web Development" | "Software Development" | "Data Science" | "Other";
+  hashtags: string[];
+  simplifiedExplanation: string;
+  mermaidSchema: string;
+  promptExamples: string[];
+}
+
+interface RetryConfig {
+  maxRetries: number;
+  initialDelayMs: number;
+  maxDelayMs: number;
+  backoffMultiplier: number;
+}
+
+const DEFAULT_RETRY_CONFIG: RetryConfig = {
+  maxRetries: 3,
+  initialDelayMs: 1000,
+  maxDelayMs: 30000,
+  backoffMultiplier: 2,
+};
+
+// Initialize Anthropic client
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+/**
+ * Sleep utility for exponential backoff
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Calculate exponential backoff delay with jitter
+ */
+function calculateBackoffDelay(
+  attempt: number,
+  config: RetryConfig
+): number {
+  const exponentialDelay = Math.min(
+    config.initialDelayMs * Math.pow(config.backoffMultiplier, attempt),
+    config.maxDelayMs
+  );
+
+  // Add jitter: random value between 0 and exponentialDelay
+  const jitter = Math.random() * exponentialDelay;
+  return exponentialDelay + jitter;
+}
+
+/**
+ * Determine if error is retryable
+ */
+function isRetryableError(error: unknown): boolean {
+  // Rate limit errors
+  if (error instanceof Anthropic.RateLimitError) {
+    logger.warn("Rate limit error detected, will retry", {
+      status: error.status,
+      message: error.message,
+    });
+    return true;
+  }
+
+  // Timeout/Network errors
+  if (error instanceof Anthropic.APIConnectionError) {
+    logger.warn("Connection error detected, will retry", {
+      message: error.message,
+    });
+    return true;
+  }
+
+  // Temporary server errors (5xx)
+  if (error instanceof Anthropic.APIStatusError) {
+    const status = error.status;
+    if (status >= 500 && status < 600) {
+      logger.warn("Server error detected, will retry", {
+        status,
+        message: error.message,
+      });
+      return true;
+    }
+
+    // 408 Request Timeout
+    if (status === 408) {
+      logger.warn("Request timeout, will retry", {
+        status,
+        message: error.message,
+      });
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Extract article data with Claude API
+ * Implements exponential backoff retry logic
+ * Assumes Claude returns PERFECT JSON - no string manipulation
+ */
+export async function extractArticleDataWithRetry(
+  articleTitle: string,
+  articleSummary: string,
+  arxivCategory: string,
+  retryConfig: RetryConfig = DEFAULT_RETRY_CONFIG
+): Promise<ClaudeExtractionResult> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= retryConfig.maxRetries; attempt++) {
+    try {
+      logger.info("Calling Claude API for article extraction", {
+        attempt: attempt + 1,
+        maxRetries: retryConfig.maxRetries + 1,
+        title: articleTitle.substring(0, 50),
+      });
+
+      const result = await callClaudeAPI(
+        articleTitle,
+        articleSummary,
+        arxivCategory
+      );
+
+      logger.info("Successfully extracted article data from Claude", {
+        attempt: attempt + 1,
+        themeArea: result.themeArea,
+        hashtagCount: result.hashtags.length,
+      });
+
+      return result;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+
+      const isRetryable = isRetryableError(error);
+
+      if (!isRetryable) {
+        logger.error("Non-retryable error from Claude API", {
+          error: lastError.message,
+          attempt: attempt + 1,
+        });
+
+        Sentry.captureException(lastError, {
+          tags: {
+            source: "claude-client",
+            operation: "extractArticleDataWithRetry",
+            retryable: false,
+          },
+          extra: {
+            attempt: attempt + 1,
+            title: articleTitle.substring(0, 100),
+          },
+        });
+
+        throw lastError;
+      }
+
+      // Check if we should retry
+      if (attempt < retryConfig.maxRetries) {
+        const delayMs = calculateBackoffDelay(attempt, retryConfig);
+
+        logger.warn("Retryable error detected, will retry with backoff", {
+          error: lastError.message,
+          attempt: attempt + 1,
+          nextRetryDelayMs: delayMs,
+          maxRetries: retryConfig.maxRetries,
+        });
+
+        await sleep(delayMs);
+      }
+    }
+  }
+
+  // All retries exhausted
+  logger.error("All Claude API retry attempts exhausted", {
+    maxRetries: retryConfig.maxRetries,
+    lastError: lastError?.message,
+    title: articleTitle.substring(0, 50),
+  });
+
+  Sentry.captureException(lastError, {
+    tags: {
+      source: "claude-client",
+      operation: "extractArticleDataWithRetry",
+      retryable: true,
+      retriesExhausted: true,
+    },
+    extra: {
+      totalAttempts: retryConfig.maxRetries + 1,
+      title: articleTitle.substring(0, 100),
+    },
+  });
+
+  throw new Error(
+    `Failed to extract article data after ${retryConfig.maxRetries + 1} attempts: ${lastError?.message}`
+  );
+}
+
+/**
+ * Core Claude API call
+ * Assumes PERFECT JSON output - no string manipulation
+ */
+async function callClaudeAPI(
+  articleTitle: string,
+  articleSummary: string,
+  arxivCategory: string
+): Promise<ClaudeExtractionResult> {
+  try {
+    const systemPrompt = buildSystemPrompt();
+    const userPrompt = buildUserPrompt(articleTitle, articleSummary, arxivCategory);
+
+    const message = await anthropic.messages.create({
+      model: "claude-3-5-sonnet-20241022",
+      max_tokens: 2048,
+      system: systemPrompt,
+      messages: [
+        {
+          role: "user",
+          content: userPrompt,
+        },
+      ],
+    });
+
+    // Extract text content from response
+    const textContent = message.content.find((block) => block.type === "text");
+    if (!textContent || textContent.type !== "text") {
+      throw new Error("No text content in Claude response");
+    }
+
+    const rawContent = textContent.text;
+
+    logger.debug("Raw Claude response received", {
+      contentLength: rawContent.length,
+      preview: rawContent.substring(0, 100),
+    });
+
+    // CRITICAL: Parse JSON directly without any string manipulation
+    // Assume Claude returns PERFECT JSON
+    const parsedData = JSON.parse(rawContent);
+
+    // Validate parsed data structure
+    validateJSONStructure(parsedData);
+
+    // Type-safe extraction with validation
+    const result = extractTypedData(parsedData);
+
+    logger.debug("Successfully parsed and validated Claude response", {
+      themeArea: result.themeArea,
+      hashtagCount: result.hashtags.length,
+      exampleCount: result.promptExamples.length,
+    });
+
+    return result;
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      logger.error("JSON parse error from Claude response", {
+        error: error.message,
+        hint: "Claude returned invalid JSON",
+      });
+
+      Sentry.captureException(error, {
+        tags: {
+          source: "claude-client",
+          operation: "callClaudeAPI",
+          errorType: "json-parse-error",
+        },
+      });
+
+      throw new Error(`Invalid JSON from Claude: ${error.message}`);
+    }
+
+    if (error instanceof ValidationError) {
+      logger.error("JSON validation error from Claude response", {
+        error: error.message,
+        failedField: error.field,
+      });
+
+      Sentry.captureException(error, {
+        tags: {
+          source: "claude-client",
+          operation: "callClaudeAPI",
+          errorType: "validation-error",
+        },
+        extra: {
+          failedField: error.field,
+        },
+      });
+
+      throw error;
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * Custom validation error
+ */
+class ValidationError extends Error {
+  constructor(
+    public field: string,
+    public value: unknown,
+    message: string
+  ) {
+    super(message);
+    this.name = "ValidationError";
+  }
+}
+
+/**
+ * Validate JSON structure matches expected format
+ */
+function validateJSONStructure(data: unknown): asserts data is Record<string, unknown> {
+  if (typeof data !== "object" || data === null) {
+    throw new Error("Response is not a JSON object");
+  }
+
+  const requiredFields = ["themeArea", "hashtags", "simplifiedExplanation", "mermaidSchema", "promptExamples"];
+
+  for (const field of requiredFields) {
+    if (!(field in data)) {
+      throw new ValidationError(field, data, `Missing required field: ${field}`);
+    }
+  }
+}
+
+/**
+ * Extract and validate typed data from parsed JSON
+ * CRITICAL: No string manipulation, direct validation only
+ */
+function extractTypedData(data: Record<string, unknown>): ClaudeExtractionResult {
+  // Validate and extract themeArea
+  const themeArea = validateThemeArea(data.themeArea);
+
+  // Validate and extract hashtags
+  const hashtags = validateHashtags(data.hashtags);
+
+  // Validate and extract simplifiedExplanation
+  const simplifiedExplanation = validateSimplifiedExplanation(data.simplifiedExplanation);
+
+  // Validate and extract mermaidSchema
+  const mermaidSchema = validateMermaidSchema(data.mermaidSchema);
+
+  // Validate and extract promptExamples
+  const promptExamples = validatePromptExamples(data.promptExamples);
+
+  return {
+    themeArea,
+    hashtags,
+    simplifiedExplanation,
+    mermaidSchema,
+    promptExamples,
+  };
+}
+
+/**
+ * Validate themeArea field
+ * No string manipulation - direct type checking
+ */
+function validateThemeArea(
+  value: unknown
+): "Web Development" | "Software Development" | "Data Science" | "Other" {
+  if (typeof value !== "string") {
+    throw new ValidationError(
+      "themeArea",
+      value,
+      `themeArea must be a string, got ${typeof value}`
+    );
+  }
+
+  const validAreas = ["Web Development", "Software Development", "Data Science", "Other"];
+
+  if (!validAreas.includes(value)) {
+    throw new ValidationError(
+      "themeArea",
+      value,
+      `themeArea must be one of ${validAreas.join(", ")}, got "${value}"`
+    );
+  }
+
+  return value as "Web Development" | "Software Development" | "Data Science" | "Other";
+}
+
+/**
+ * Validate hashtags array
+ * No string manipulation - direct array validation
+ */
+function validateHashtags(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    throw new ValidationError(
+      "hashtags",
+      value,
+      `hashtags must be an array, got ${typeof value}`
+    );
+  }
+
+  if (value.length < 3) {
+    throw new ValidationError(
+      "hashtags",
+      value,
+      `hashtags array must contain at least 3 items, got ${value.length}`
+    );
+  }
+
+  if (value.length > 10) {
+    throw new ValidationError(
+      "hashtags",
+      value,
+      `hashtags array must contain at most 10 items, got ${value.length}`
+    );
+  }
+
+  for (let i = 0; i < value.length; i++) {
+    const tag = value[i];
+
+    if (typeof tag !== "string") {
+      throw new ValidationError(
+        `hashtags[${i}]`,
+        tag,
+        `hashtags item must be a string, got ${typeof tag}`
+      );
+    }
+
+    // Validate hashtag format: must start with # and contain only alphanumeric and hyphens
+    if (!/^#[a-z0-9]+(-[a-z0-9]+)*$/.test(tag)) {
+      throw new ValidationError(
+        `hashtags[${i}]`,
+        tag,
+        `hashtag must match format #word(-word)*, got "${tag}"`
+      );
+    }
+  }
+
+  return value as string[];
+}
+
+/**
+ * Validate simplifiedExplanation field
+ * No string manipulation - direct length validation
+ */
+function validateSimplifiedExplanation(value: unknown): string {
+  if (typeof value !== "string") {
+    throw new ValidationError(
+      "simplifiedExplanation",
+      value,
+      `simplifiedExplanation must be a string, got ${typeof value}`
+    );
+  }
+
+  if (value.length < 20) {
+    throw new ValidationError(
+      "simplifiedExplanation",
+      value,
+      `simplifiedExplanation must be at least 20 characters, got ${value.length}`
+    );
+  }
+
+  if (value.length > 500) {
+    throw new ValidationError(
+      "simplifiedExplanation",
+      value,
+      `simplifiedExplanation must be at most 500 characters, got ${value.length}`
+    );
+  }
+
+  return value;
+}
+
+/**
+ * Validate mermaidSchema field
+ * No string manipulation - direct format validation
+ */
+function validateMermaidSchema(value: unknown): string {
+  if (typeof value !== "string") {
+    throw new ValidationError(
+      "mermaidSchema",
+      value,
+      `mermaidSchema must be a string, got ${typeof value}`
+    );
+  }
+
+  if (!value.startsWith("graph")) {
+    throw new ValidationError(
+      "mermaidSchema",
+      value,
+      `mermaidSchema must start with "graph", got "${value.substring(0, 20)}"`
+    );
+  }
+
+  if (value.length < 50) {
+    throw new ValidationError(
+      "mermaidSchema",
+      value,
+      `mermaidSchema must be at least 50 characters, got ${value.length}`
+    );
+  }
+
+  if (value.length > 2000) {
+    throw new ValidationError(
+      "mermaidSchema",
+      value,
+      `mermaidSchema must be at most 2000 characters, got ${value.length}`
+    );
+  }
+
+  // Validate it contains graph connections
+  if (!value.includes("-->") && !value.includes("-")) {
+    throw new ValidationError(
+      "mermaidSchema",
+      value,
+      `mermaidSchema must contain graph connections (-->) or relationships`
+    );
+  }
+
+  return value;
+}
+
+/**
+ * Validate promptExamples array
+ * No string manipulation - direct array validation
+ */
+function validatePromptExamples(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    throw new ValidationError(
+      "promptExam
+
+=== PROMPT 6: MERMAID VALIDATION ===
+```typescript
+// lib/validation/mermaid-validator.ts
+
+import { logger } from "@/lib/monitoring/logger";
+import * as Sentry from "@sentry/nextjs";
+
+export interface MermaidValidationResult {
+  isValid: boolean;
+  errors: MermaidValidationError[];
+  warnings: string[];
+  nodeCount: number;
+  connectionCount: number;
+  graphType: string;
+}
+
+export interface MermaidValidationError {
+  line: number;
+  column: number;
+  code: string;
+  message: string;
+  snippet: string;
+}
+
+interface ParsedNode {
+  id: string;
+  label: string;
+  type: "rectangular" | "rounded" | "diamond" | "circle" | "hexagon" | "parallelogram" | "trapezoid" | "text";
+  lineNumber: number;
+}
+
+interface ParsedConnection {
+  source: string;
+  target: string;
+  label?: string;
+  type: "arrow" | "solid" | "dotted" | "thick";
+  lineNumber: number;
+}
+
+/**
+ * Rigorous Mermaid flowchart validator
+ * Parses syntax strictly and validates graph structure
+ */
+export function validateMermaidSchema(schema: string): MermaidValidationResult {
+  const errors: MermaidValidationError[] = [];
+  const warnings: string[] = [];
+
+  try {
+    logger.debug("Starting Mermaid schema validation", {
+      schemaLength: schema.length,
+      preview: schema.substring(0, 100),
+    });
+
+    // Step 1: Basic format validation
+    const formatErrors = validateBasicFormat(schema);
+    if (formatErrors.length > 0) {
+      errors.push(...formatErrors);
+      return {
+        isValid: false,
+        errors,
+        warnings,
+        nodeCount: 0,
+        connectionCount: 0,
+        graphType: "unknown",
+      };
+    }
+
+    // Step 2: Parse graph declaration
+    const graphType = parseGraphDeclaration(schema);
+    if (!graphType) {
+      errors.push({
+        line: 1,
+        column: 0,
+        code: "INVALID_GRAPH_DECLARATION",
+        message: "Invalid or missing graph declaration. Must start with 'graph TD', 'graph LR', 'graph TB', or 'graph RL'",
+        snippet: schema.split("\n")[0] || "",
+      });
+
+      return {
+        isValid: false,
+        errors,
+        warnings,
+        nodeCount: 0,
+        connectionCount: 0,
+        graphType: "unknown",
+      };
+    }
+
+    // Step 3: Tokenize and parse
+    const lines = schema.split("\n").map((line) => line.trim()).filter((line) => line.length > 0 && !line.startsWith("%%"));
+
+    const nodes = new Map<string, ParsedNode>();
+    const connections: ParsedConnection[] = [];
+    const nodeIds = new Set<string>();
+
+    for (let lineNumber = 0; lineNumber < lines.length; lineNumber++) {
+      const line = lines[lineNumber];
+
+      // Skip graph declaration
+      if (line.startsWith("graph")) {
+        continue;
+      }
+
+      // Skip style declarations
+      if (line.startsWith("style") || line.startsWith("classDef") || line.startsWith("class")) {
+        continue;
+      }
+
+      // Parse connections (must come before nodes in priority)
+      const connectionMatch = parseConnection(line, lineNumber);
+      if (connectionMatch) {
+        connections.push(connectionMatch);
+        nodeIds.add(connectionMatch.source);
+        nodeIds.add(connectionMatch.target);
+        continue;
+      }
+
+      // Parse node declarations
+      const nodeMatch = parseNode(line, lineNumber);
+      if (nodeMatch) {
+        if (nodes.has(nodeMatch.id)) {
+          warnings.push(`Duplicate node definition at line ${lineNumber + 1}: ${nodeMatch.id}`);
+        }
+        nodes.set(nodeMatch.id, nodeMatch);
+        nodeIds.add(nodeMatch.id);
+        continue;
+      }
+
+      // If line doesn't match any pattern, it's an error
+      if (line.length > 0) {
+        errors.push({
+          line: lineNumber + 1,
+          column: 0,
+          code: "INVALID_SYNTAX",
+          message: `Invalid Mermaid syntax. Line does not match any valid pattern.`,
+          snippet: line,
+        });
+      }
+    }
+
+    // Step 4: Validate node references in connections
+    for (const connection of connections) {
+      if (!nodeIds.has(connection.source)) {
+        errors.push({
+          line: connection.lineNumber + 1,
+          column: 0,
+          code: "UNDEFINED_NODE",
+          message: `Connection references undefined source node: ${connection.source}`,
+          snippet: lines[connection.lineNumber],
+        });
+      }
+
+      if (!nodeIds.has(connection.target)) {
+        errors.push({
+          line: connection.lineNumber + 1,
+          column: 0,
+          code: "UNDEFINED_NODE",
+          message: `Connection references undefined target node: ${connection.target}`,
+          snippet: lines[connection.lineNumber],
+        });
+      }
+    }
+
+    // Step 5: Graph structure validation
+    const structureErrors = validateGraphStructure(nodes, connections);
+    errors.push(...structureErrors);
+
+    // Step 6: Check for isolated nodes
+    for (const [nodeId] of nodes) {
+      const hasConnection = connections.some(
+        (c) => c.source === nodeId || c.target === nodeId
+      );
+
+      if (!hasConnection && nodes.size > 1) {
+        warnings.push(`Node "${nodeId}" is isolated and not connected to other nodes`);
+      }
+    }
+
+    // Step 7: Check for circular references (optional warning)
+    const cycles = detectCycles(nodes, connections);
+    if (cycles.length > 0) {
+      warnings.push(`Potential circular reference detected: ${cycles.join(", ")}`);
+    }
+
+    const isValid = errors.length === 0;
+
+    logger.info("Mermaid schema validation completed", {
+      isValid,
+      errorCount: errors.length,
+      warningCount: warnings.length,
+      nodeCount: nodes.size,
+      connectionCount: connections.length,
+      graphType,
+    });
+
+    return {
+      isValid,
+      errors,
+      warnings,
+      nodeCount: nodes.size,
+      connectionCount: connections.length,
+      graphType,
+    };
+  } catch (error) {
+    logger.error("Unexpected error during Mermaid validation", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    Sentry.captureException(error, {
+      tags: {
+        source: "mermaid-validator",
+        operation: "validateMermaidSchema",
+      },
+    });
+
+    errors.push({
+      line: 0,
+      column: 0,
+      code: "VALIDATION_ERROR",
+      message: `Unexpected validation error: ${error instanceof Error ? error.message : String(error)}`,
+      snippet: schema.substring(0, 50),
+    });
+
+    return {
+      isValid: false,
+      errors,
+      warnings,
+      nodeCount: 0,
+      connectionCount: 0,
+      graphType: "unknown",
+    };
+  }
+}
+
+/**
+ * Validate basic format requirements
+ */
+function validateBasicFormat(schema: string): MermaidValidationError[] {
+  const errors: MermaidValidationError[] = [];
+
+  // Check if empty
+  if (!schema || schema.trim().length === 0) {
+    errors.push({
+      line: 1,
+      column: 0,
+      code: "EMPTY_SCHEMA",
+      message: "Mermaid schema is empty",
+      snippet: "",
+    });
+    return errors;
+  }
+
+  // Check if too long (arbitrary but reasonable limit)
+  if (schema.length > 5000) {
+    errors.push({
+      line: 1,
+      column: 0,
+      code: "SCHEMA_TOO_LONG",
+      message: `Mermaid schema exceeds maximum length (${schema.length} > 5000)`,
+      snippet: schema.substring(0, 100),
+    });
+  }
+
+  // Check for balanced brackets
+  let squareBracketCount = 0;
+  let curlyBracketCount = 0;
+  let roundBracketCount = 0;
+
+  for (let i = 0; i < schema.length; i++) {
+    const char = schema[i];
+
+    if (char === "[") squareBracketCount++;
+    if (char === "]") squareBracketCount--;
+    if (char === "{") curlyBracketCount++;
+    if (char === "}") curlyBracketCount--;
+    if (char === "(") roundBracketCount++;
+    if (char === ")") roundBracketCount--;
+
+    if (squareBracketCount < 0 || curlyBracketCount < 0 || roundBracketCount < 0) {
+      const lineNumber = schema.substring(0, i).split("\n").length;
+      errors.push({
+        line: lineNumber,
+        column: i,
+        code: "UNBALANCED_BRACKETS",
+        message: "Unbalanced brackets detected",
+        snippet: schema.split("\n")[lineNumber - 1] || "",
+      });
+      break;
+    }
+  }
+
+  if (squareBracketCount !== 0) {
+    errors.push({
+      line: 1,
+      column: 0,
+      code: "UNBALANCED_BRACKETS",
+      message: `Unbalanced square brackets: ${squareBracketCount > 0 ? "missing" : "extra"} ]`,
+      snippet: schema.substring(0, 100),
+    });
+  }
+
+  if (curlyBracketCount !== 0) {
+    errors.push({
+      line: 1,
+      column: 0,
+      code: "UNBALANCED_BRACKETS",
+      message: `Unbalanced curly brackets: ${curlyBracketCount > 0 ? "missing" : "extra"} }`,
+      snippet: schema.substring(0, 100),
+    });
+  }
+
+  if (roundBracketCount !== 0) {
+    errors.push({
+      line: 1,
+      column: 0,
+      code: "UNBALANCED_BRACKETS",
+      message: `Unbalanced round brackets: ${roundBracketCount > 0 ? "missing" : "extra"} )`,
+      snippet: schema.substring(0, 100),
+    });
+  }
+
+  return errors;
+}
+
+/**
+ * Parse graph declaration line
+ * Valid: graph TD, graph LR, graph TB, graph RL
+ */
+function parseGraphDeclaration(schema: string): string | null {
+  const firstLine = schema.split("\n")[0].trim();
+
+  // Strict regex for graph declaration
+  const graphRegex = /^graph\s+(TD|LR|TB|RL|BT)(\s|$)/i;
+  const match = firstLine.match(graphRegex);
+
+  if (match) {
+    return match[1].toUpperCase();
+  }
+
+  return null;
+}
+
+/**
+ * Parse a connection line
+ * Valid formats:
+ * - A --> B
+ * - A -->|label| B
+ * - A --- B
+ * - A -. B
+ * - A ==> B
+ */
+function parseConnection(line: string, lineNumber: number): ParsedConnection | null {
+  // Connection regex - very strict
+  // Format: NodeID(Arrow|Connection)NodeID or NodeID(Arrow|Connection)|Label|NodeID
+  const connectionRegex = /^([A-Za-z0-9_]+)\s*(-->|---|\.->|==>|\.\.>)\s*(?:\|([^|]*)\|)?([A-Za-z0-9_]+)$/;
+
+  const match = line.match(connectionRegex);
+  if (!match) {
+    return null;
+  }
+
+  const [, source, connectionType, label, target] = match;
+
+  // Validate node IDs are alphanumeric and underscore only
+  if (!/^[A-Za-z0-9_]+$/.test(source) || !/^[A-Za-z0-9_]+$/.test(target)) {
+    return null;
+  }
+
+  let type: "arrow" | "solid" | "dotted" | "thick" = "solid";
+  if (connectionType === "-->") type = "arrow";
+  if (connectionType === "---") type = "solid";
+  if (connectionType === ".->") type = "dotted";
+  if (connectionType === "==>") type = "thick";
+
+  return {
+    source,
+    target,
+    label: label?.trim() || undefined,
+    type,
+    lineNumber,
+  };
+}
+
+/**
+ * Parse a node declaration line
+ * Valid formats:
+ * - A["Label"]
+ * - A("Rounded")
+ * - A{Diamond}
+ * - A((Circle))
+ * - A[/Parallelogram/]
+ * - A[\\Trapezoid\\]
+ * - A@{ hexagon }
+ */
+function parseNode(line: string, lineNumber: number): ParsedNode | null {
+  // Node declaration regex - strict
+  const nodeRegexes = [
+    // Rectangular: A["Label"]
+    {
+      regex: /^([A-Za-z0-9_]+)\s*\[\s*"([^"]*)"\s*\]$/,
+      type: "rectangular" as const,
+    },
+    // Rounded: A("Label")
+    {
+      regex: /^([A-Za-z0-9_]+)\s*\(\s*"([^"]*)"\s*\)$/,
+      type: "rounded" as const,
+    },
+    // Diamond: A{Label}
+    {
+      regex: /^([A-Za-z0-9_]+)\s*\{\s*([^}]*)\s*\}$/,
+      type: "diamond" as const,
+    },
+    // Circle: A((Label))
+    {
+      regex: /^([A-Za-z0-9_]+)\s*\(\(\s*([^)]*)\s*\)\)$/,
+      type: "circle" as const,
+    },
+    // Hexagon: A@{ Label }
+    {
+      regex: /^([A-Za-z0-9_]+)\s*@\{\s*([^}]*)\s*\}$/,
+      type: "hexagon" as const,
+    },
+    // Parallelogram: A[/Label/]
+    {
+      regex: /^([A-Za-z0-9_]+)\s*\[\s*\/([^/]*)\s*\/\s*\]$/,
+      type: "parallelogram" as const,
+    },
+    // Trapezoid: A[\\Label\\]
+    {
+      regex: /^([A-Za-z0-9_]+)\s*\[\s*\\\\([^\\]*)\\\\\s*\]$/,
+      type: "trapezoid" as const,
+    },
+    // Text (no formatting): A[Label]
+    {
+      regex: /^([A-Za-z0-9_]+)\s*\[\s*([^\]]*)\s*\]$/,
+      type: "text" as const,
+    },
+  ];
+
+  for (const { regex, type } of nodeRegexes) {
+    const match = line.match(regex);
+    if (match) {
+      const [, id, label] = match;
+
+      // Validate node ID
+      if (!/^[A-Za-z0-9_]+$/.test(id)) {
+        return null;
+      }
+
+      // Validate label is not empty
+      if (label.trim().length === 0) {
+        return null;
+      }
+
+      return {
+        id,
+        
+
+=== PROMPT 7: CRON JOB INTEGRATION ===
+```typescript
+// app/api/cron/process-arxiv-articles/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
+import { fetchArxivFeed, checkDuplicateArticle, processArticleWithInsights } from "@/lib/arxiv/fetcher";
+import { extractArticleDataWithRetry } from "@/lib/ai/claude-client";
+import { validateMermaidSchema } from "@/lib/validation/mermaid-validator";
+import { logger } from "@/lib/monitoring/logger";
+import * as Sentry from "@sentry/nextjs";
+
+interface CronJobResponse {
+  success: boolean;
+  jobId: string;
+  timestamp: string;
+  articlesProcessed: number;
+  articlesSaved: number;
+  errors: CronJobError[];
+  duration: number;
+}
+
+interface CronJobError {
+  article?: string;
+  code: string;
+  message: string;
+  details?: unknown;
+}
+
+const CRON_SECRET_KEY = process.env.CRON_SECRET_KEY;
+const MAX_ARTICLES_PER_RUN = parseInt(process.env.MAX_ARTICLES_PER_RUN || "10", 10);
+const SYSTEM_USER_ID = process.env.SYSTEM_USER_ID || "system";
+
+/**
+ * POST /api/cron/process-arxiv-articles
+ * Process daily ArXiv articles and save to database
+ *
+ * Authentication: Bearer token (CRON_SECRET_KEY)
+ * Headers required:
+ *   - Authorization: Bearer <CRON_SECRET_KEY>
+ *   - X-Cron-Signature: (optional, for additional validation)
+ */
+export async function POST(request: NextRequest): Promise<NextResponse<CronJobResponse>> {
+  const startTime = Date.now();
+  const jobId = generateJobId();
+  const errors: CronJobError[] = [];
+
+  try {
+    logger.info("ArXiv processing cron job started", { jobId });
+
+    // ============ STEP 1: AUTHENTICATION ============
+    const authError = validateBearerToken(request);
+    if (authError) {
+      logger.error("Cron job authentication failed", {
+        jobId,
+        error: authError,
+      });
+
+      Sentry.captureMessage("Cron job authentication failed", "error");
+
+      return NextResponse.json(
+        {
+          success: false,
+          jobId,
+          timestamp: new Date().toISOString(),
+          articlesProcessed: 0,
+          articlesSaved: 0,
+          errors: [
+            {
+              code: "AUTHENTICATION_FAILED",
+              message: authError,
+            },
+          ],
+          duration: Date.now() - startTime,
+        },
+        { status: 401 }
+      );
+    }
+
+    // ============ STEP 2: RECORD CRON JOB START ============
+    const cronJobRun = await prisma.cronJobRun.create({
+      data: {
+        jobName: "process-arxiv-articles",
+        status: "PROCESSING",
+        startedAt: new Date(),
+      },
+    });
+
+    logger.info("Cron job recorded in database", {
+      jobId,
+      cronJobRunId: cronJobRun.id,
+    });
+
+    // ============ STEP 3: FETCH ARXIV FEED ============
+    let arxivArticles = [];
+    try {
+      arxivArticles = await fetchArxivFeed();
+      logger.info("ArXiv feed fetched successfully", {
+        jobId,
+        articleCount: arxivArticles.length,
+      });
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      logger.error("Failed to fetch ArXiv feed", {
+        jobId,
+        error: errorMsg,
+      });
+
+      errors.push({
+        code: "ARXIV_FETCH_ERROR",
+        message: `Failed to fetch ArXiv feed: ${errorMsg}`,
+      });
+
+      // Update cron job as failed
+      await prisma.cronJobRun.update({
+        where: { id: cronJobRun.id },
+        data: {
+          status: "FAILED",
+          errorMessage: errorMsg,
+          completedAt: new Date(),
+        },
+      });
+
+      return NextResponse.json(
+        {
+          success: false,
+          jobId,
+          timestamp: new Date().toISOString(),
+          articlesProcessed: 0,
+          articlesSaved: 0,
+          errors,
+          duration: Date.now() - startTime,
+        },
+        { status: 500 }
+      );
+    }
+
+    // Limit articles processed per run
+    const articlesToProcess = arxivArticles.slice(0, MAX_ARTICLES_PER_RUN);
+
+    logger.info("Processing articles", {
+      jobId,
+      totalFetched: arxivArticles.length,
+      toProcess: articlesToProcess.length,
+    });
+
+    // ============ STEP 4: PROCESS AND SAVE ARTICLES ============
+    let articlesSaved = 0;
+
+    for (let i = 0; i < articlesToProcess.length; i++) {
+      const article = articlesToProcess[i];
+      const articleIndex = i + 1;
+
+      try {
+        logger.debug(`Processing article ${articleIndex}/${articlesToProcess.length}`, {
+          jobId,
+          arxivId: article.id,
+          title: article.title.substring(0, 50),
+        });
+
+        // Check for duplicates
+        const isDuplicate = await checkDuplicateArticle(article.id, article.title);
+        if (isDuplicate) {
+          logger.info("Duplicate article skipped", {
+            jobId,
+            arxivId: article.id,
+          });
+          continue;
+        }
+
+        // Process article with AI insights
+        const processedArticle = await processArticleWithInsights(article);
+
+        // Extract additional data with Claude
+        const claudeData = await extractArticleDataWithRetry(
+          article.title,
+          article.summary,
+          article.category
+        );
+
+        // ============ STEP 5: VALIDATE MERMAID SCHEMA ============
+        const mermaidValidation = validateMermaidSchema(claudeData.mermaidSchema);
+
+        if (!mermaidValidation.isValid) {
+          const validationErrors = mermaidValidation.errors
+            .map((e) => `Line ${e.line}: ${e.code} - ${e.message}`)
+            .join("; ");
+
+          logger.warn("Mermaid schema validation failed, using fallback", {
+            jobId,
+            arxivId: article.id,
+            errors: validationErrors,
+            warningCount: mermaidValidation.warnings.length,
+          });
+
+          // Use fallback schema instead of rejecting
+          claudeData.mermaidSchema = generateFallbackMermaidSchema(article.title);
+
+          errors.push({
+            article: article.id,
+            code: "MERMAID_VALIDATION_WARNING",
+            message: `Mermaid schema validation failed, using fallback: ${validationErrors}`,
+          });
+        } else {
+          logger.debug("Mermaid schema validation passed", {
+            jobId,
+            arxivId: article.id,
+            nodeCount: mermaidValidation.nodeCount,
+            connectionCount: mermaidValidation.connectionCount,
+          });
+        }
+
+        // ============ STEP 6: SAVE TO DATABASE (TRANSACTION) ============
+        const savedArticle = await prisma.$transaction(async (tx) => {
+          // Create article
+          const article_record = await tx.article.create({
+            data: {
+              userId: SYSTEM_USER_ID,
+              title: processedArticle.title,
+              slug: processedArticle.slug,
+              description: processedArticle.description,
+              content: processedArticle.content,
+              insights: claudeData.insights,
+              theme_area: claudeData.themeArea,
+              mermaidSchema: claudeData.mermaidSchema,
+              tags: claudeData.hashtags,
+              category: processedArticle.category,
+              metaTitle: processedArticle.metaTitle,
+              metaDescription: processedArticle.metaDescription,
+              metaKeywords: processedArticle.metaKeywords,
+              publishedAt: new Date(article.published),
+              featured: false,
+            },
+          });
+
+          // Create audit log
+          await tx.auditLog.create({
+            data: {
+              userId: SYSTEM_USER_ID,
+              action: "ARTICLE_IMPORTED_FROM_ARXIV",
+              resource: "article",
+              resourceId: article_record.id,
+              details: {
+                arxivId: article.id,
+                arxivUrl: article.link,
+                sourceCategory: article.category,
+              },
+            },
+          });
+
+          return article_record;
+        });
+
+        articlesSaved++;
+
+        logger.info("Article saved successfully", {
+          jobId,
+          arxivId: article.id,
+          articleId: savedArticle.id,
+          themeArea: claudeData.themeArea,
+        });
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+
+        logger.error(`Failed to process article ${articleIndex}/${articlesToProcess.length}`, {
+          jobId,
+          arxivId: article.id,
+          error: errorMsg,
+        });
+
+        Sentry.captureException(error, {
+          tags: {
+            jobId,
+            source: "cron-arxiv-processor",
+            articleIndex: articleIndex.toString(),
+          },
+          extra: {
+            arxivId: article.id,
+            title: article.title.substring(0, 100),
+          },
+        });
+
+        errors.push({
+          article: article.id,
+          code: "ARTICLE_PROCESSING_ERROR",
+          message: errorMsg,
+        });
+      }
+    }
+
+    // ============ STEP 7: UPDATE CRON JOB STATUS ============
+    await prisma.cronJobRun.update({
+      where: { id: cronJobRun.id },
+      data: {
+        status: "COMPLETED",
+        completedAt: new Date(),
+      },
+    });
+
+    logger.info("ArXiv processing cron job completed", {
+      jobId,
+      articlesProcessed: articlesToProcess.length,
+      articlesSaved,
+      errorCount: errors.length,
+      duration: Date.now() - startTime,
+    });
+
+    const response: CronJobResponse = {
+      success: errors.length === 0,
+      jobId,
+      timestamp: new Date().toISOString(),
+      articlesProcessed: articlesToProcess.length,
+      articlesSaved,
+      errors,
+      duration: Date.now() - startTime,
+    };
+
+    return NextResponse.json(response, { status: 200 });
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+
+    logger.error("Cron job failed with unexpected error", {
+      jobId,
+      error: errorMsg,
+      duration: Date.now() - startTime,
+    });
+
+    Sentry.captureException(error, {
+      tags: {
+        jobId,
+        source: "cron-arxiv-processor",
+        severity: "critical",
+      },
+    });
+
+    errors.push({
+      code: "UNEXPECTED_ERROR",
+      message: errorMsg,
+    });
+
+    return NextResponse.json(
+      {
+        success: false,
+        jobId,
+        timestamp: new Date().toISOString(),
+        articlesProcessed: 0,
+        articlesSaved: 0,
+        errors,
+        duration: Date.now() - startTime,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Validate Bearer token from Authorization header
+ * CRITICAL SECURITY: Strict token validation
+ */
+function validateBearerToken(request: NextRequest): string | null {
+  try {
+    // Check if CRON_SECRET_KEY is configured
+    if (!CRON_SECRET_KEY) {
+      logger.error("CRON_SECRET_KEY not configured");
+      return "Server configuration error: CRON_SECRET_KEY not set";
+    }
+
+    // Get Authorization header
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader) {
+      return "Missing Authorization header";
+    }
+
+    // Validate Bearer format
+    const parts = authHeader.split(" ");
+    if (parts.length !== 2) {
+      return "Invalid Authorization header format. Expected: Bearer <token>";
+    }
+
+    const [scheme, token] = parts;
+
+    if (scheme.toLowerCase() !== "bearer") {
+      return "Invalid authentication scheme. Expected: Bearer";
+    }
+
+    if (!token || token.length === 0) {
+      return "Empty bearer token";
+    }
+
+    // Validate token format (must be hex or alphanumeric)
+    if (!/^[a-zA-Z0-9\-_]+$/.test(token)) {
+      return "Invalid token format";
+    }
+
+    // Constant-time comparison to prevent timing attacks
+    if (!constantTimeCompare(token, CRON_SECRET_KEY)) {
+      logger.warn("Cron job authentication failed: invalid token", {
+        tokenLength: token.length,
+      });
+      return "Invalid authentication token";
+    }
+
+    return null; // Authentication successful
+  } catch (error) {
+    logger.error("Error during Bearer token validation", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return "Authentication validation error";
+  }
+}
+
+/**
+ * Constant-time string comparison to prevent timing attacks
+ */
+function constantTimeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+
+  return result === 0;
+}
+
+/**
+ * Generate unique job ID
+ */
+function generateJobId(): string {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 11);
+  return `job_${timestamp}_${random}`;
+}
+
+/**
+ * Generate fallback Mermaid schema when validation fails
+ */
+function generateFallbackMermaidSchema(title: string): string {
+  const safeTitle = title
+    .substring(0, 40)
+    .replace(/"/g, "'")
+    .replace(/\n/g, " ");
+
+  return (
+    'graph TD\\n' +
+    `A["${safeTitle}"]\\n` +
+    'A --> B["Research Paper"]\\n' +
+    'B --> C["Key Concepts"]\\n' +
+    'C --> D["Implementation"]\\n' +
+    'D --> E["Results"]\\n' +
+    'style A fill:#e1f5ff\\n' +
+    'style E fill:#c8e6c9'
+  );
+}
+
+/**
+ * Verify request is from authorized cron service
+ * Optional: Add IP whitelist validation for Vercel Cron
+ */
+function validateCronSource(request: NextRequest): boolean {
+  // Vercel Cron Service IPs (optional, if using Vercel Cron)
+  const VERCEL_CRON_IPS = [
+    "76.76.19.0/24",  // Vercel Cron IP range
+  ];
+
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0] ||
+             request.headers.get("x-real-ip") ||
+             "unknown";
+
+  logger.debug("Cron request source validation", {
+    ip,
+    userAgent: request.headers.get("user-agent"),
+  });
+
+  // Implement IP validation if needed
+  // For now, rely
+
+=== PROMPT 8: I18N DICTIONARIES ===
+```typescript
+// lib/i18n/dictionaries.ts
+
+export type Locale = "en" | "uk";
+
+export interface Dictionary {
+  title: string;
+  save: string;
+  error: string;
+  loading: string;
+}
+
+const dictionaries: Record<Locale, Dictionary> = {
+  en: {
+    title: "AILens - AI Research Explorer",
+    save: "Save",
+    error: "An error occurred",
+    loading: "Loading...",
+  },
+  uk: {
+    title: "AILens - Дослідник AI Досліджень",
+    save: "Зберегти",
+    error: "Сталася помилка",
+    loading: "Завантаження...",
+  },
+};
+
+export async function getDictionary(locale: Locale): Promise<Dictionary> {
+  return dictionaries[locale] || dictionaries["en"];
+}
+```
+
+```typescript
+// lib/i18n/config.ts
+
+import { Locale } from "./dictionaries";
+
+export const SUPPORTED_LOCALES: Locale[] = ["en", "uk"];
+export const DEFAULT_LOCALE: Locale = "en";
+
+export function isValidLocale(locale: string): locale is Locale {
+  return SUPPORTED_LOCALES.includes(locale as Locale);
+}
+
+export function normalizeLocale(locale: string | undefined): Locale {
+  if (!locale) return DEFAULT_LOCALE;
+
+  const normalized = locale.toLowerCase().substring(0, 2);
+
+  return isValidLocale(normalized) ? normalized : DEFAULT_LOCALE;
+}
+```
+
+```typescript
+// app/[locale]/layout.tsx
+
+import { ReactNode } from "react";
+import { notFound } from "next/navigation";
+import { SUPPORTED_LOCALES } from "@/lib/i18n/config";
+import { getDictionary, Locale } from "@/lib/i18n/dictionaries";
+
+interface LayoutProps {
+  children: ReactNode;
+  params: Promise<{
+    locale: string;
+  }>;
+}
+
+export async function generateStaticParams() {
+  return SUPPORTED_LOCALES.map((locale) => ({
+    locale,
+  }));
+}
+
+export async function generateMetadata(props: LayoutProps) {
+  const params = await props.params;
+  const locale = params.locale as Locale;
+
+  if (!SUPPORTED_LOCALES.includes(locale)) {
+    notFound();
+  }
+
+  const dict = await getDictionary(locale);
+
+  return {
+    title: dict.title,
+    description: "Explore AI research papers with intelligent insights",
+    openGraph: {
+      title: dict.title,
+      description: "Explore AI research papers with intelligent insights",
+    },
+  };
+}
+
+export default async function RootLayout(props: LayoutProps) {
+  const params = await props.params;
+  const locale = params.locale as Locale;
+
+  if (!SUPPORTED_LOCALES.includes(locale)) {
+    notFound();
+  }
+
+  const dict = await getDictionary(locale);
+
+  return (
+    <html lang={locale}>
+      <body>
+        <div data-locale={locale} data-i18n={JSON.stringify(dict)}>
+          {props.children}
+        </div>
+      </body>
+    </html>
+  );
+}
+```
+
+```typescript
+// hooks/useI18n.ts
+
+"use client";
+
+import { useEffect, useState } from "react";
+import { Dictionary } from "@/lib/i18n/dictionaries";
+
+export function useI18n(): Dictionary {
+  const [dict, setDict] = useState<Dictionary>({
+    title: "AILens - AI Research Explorer",
+    save: "Save",
+    error: "An error occurred",
+    loading: "Loading...",
+  });
+
+  useEffect(() => {
+    const element = document.querySelector("[data-i18n]");
+    if (element) {
+      const i18nData = element.getAttribute("data-i18n");
+      if (i18nData) {
+        try {
+          setDict(JSON.parse(i18nData));
+        } catch (error) {
+          console.error("Failed to parse i18n data:", error);
+        }
+      }
+    }
+  }, []);
+
+  return dict;
+}
+```
+
+```typescript
+// app/[locale]/page.tsx
+
+import { ReactNode } from "react";
+import { notFound } from "next/navigation";
+import { SUPPORTED_LOCALES } from "@/lib/i18n/config";
+import { getDictionary, Locale } from "@/lib/i18n/dictionaries";
+
+interface PageProps {
+  params: Promise<{
+    locale: string;
+  }>;
+}
+
+export async function generateStaticParams() {
+  return SUPPORTED_LOCALES.map((locale) => ({
+    locale,
+  }));
+}
+
+export default async function Page(props: PageProps) {
+  const params = await props.params;
+  const locale = params.locale as Locale;
+
+  if (!SUPPORTED_LOCALES.includes(locale)) {
+    notFound();
+  }
+
+  const dict = await getDictionary(locale);
+
+  return (
+    <main>
+      <h1>{dict.title}</h1>
+      <button>{dict.save}</button>
+      <p>{dict.loading}</p>
+    </main>
+  );
+}
+```
+
+```typescript
+// app/[locale]/articles/page.tsx
+
+"use client";
+
+import { useI18n } from "@/hooks/useI18n";
+
+export default function ArticlesPage() {
+  const dict = useI18n();
+
+  return (
+    <div>
+      <h1>{dict.title}</h1>
+      <p>{dict.loading}</p>
+      <button>{dict.save}</button>
+    </div>
+  );
+}
+```
+
+```typescript
+// middleware.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { SUPPORTED_LOCALES, DEFAULT_LOCALE, normalizeLocale } from "@/lib/i18n/config";
+
+export function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // Check if locale is in pathname
+  const pathnameHasLocale = SUPPORTED_LOCALES.some(
+    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
+  );
+
+  if (pathnameHasLocale) {
+    return NextResponse.next();
+  }
+
+  // Redirect root to default locale
+  if (pathname === "/") {
+    return NextResponse.redirect(new URL(`/${DEFAULT_LOCALE}`, request.url));
+  }
+
+  // Get preferred locale from Accept-Language header
+  const acceptLanguage = request.headers.get("accept-language");
+  const preferredLocale = acceptLanguage
+    ? normalizeLocale(acceptLanguage.split(",")[0])
+    : DEFAULT_LOCALE;
+
+  return NextResponse.redirect(new URL(`/${preferredLocale}${pathname}`, request.url));
+}
+
+export const config = {
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+};
+```
+
+=== PROMPT 9: I18N INTEGRATION ===
+```typescript
+// lib/i18n/client.ts
+
+import { Dictionary, Locale } from "./dictionaries";
+
+let currentDict: Dictionary | null = null;
+let currentLocale: Locale = "en";
+
+/**
+ * Initialize i18n with dictionary from server
+ * Called once on page load from layout
+ */
+export function initializeI18n(dict: Dictionary, locale: Locale): void {
+  currentDict = dict;
+  currentLocale = locale;
+}
+
+/**
+ * Get translated string by key
+ * Fallback to English if key not found
+ */
+export function t(key: keyof Dictionary): string {
+  if (!currentDict) {
+    // Fallback if not initialized
+    const fallback: Record<string, string> = {
+      title: "AILens - AI Research Explorer",
+      save: "Save",
+      error: "An error occurred",
+      loading: "Loading...",
+    };
+    return fallback[key] || key;
+  }
+
+  return currentDict[key] || key;
+}
+
+/**
+ * Get current locale
+ */
+export function getLocale(): Locale {
+  return currentLocale;
+}
+
+/**
+ * Get current dictionary
+ */
+export function getDict(): Dictionary {
+  return (
+    currentDict || {
+      title: "AILens - AI Research Explorer",
+      save: "Save",
+      error: "An error occurred",
+      loading: "Loading...",
+    }
+  );
+}
+```
+
+```typescript
+// app/[locale]/layout.tsx
+
+import { ReactNode } from "react";
+import { notFound } from "next/navigation";
+import { SUPPORTED_LOCALES } from "@/lib/i18n/config";
+import { getDictionary, Locale } from "@/lib/i18n/dictionaries";
+
+interface LayoutProps {
+  children: ReactNode;
+  params: Promise<{
+    locale: string;
+  }>;
+}
+
+export async function generateStaticParams() {
+  return SUPPORTED_LOCALES.map((locale) => ({
+    locale,
+  }));
+}
+
+export async function generateMetadata(props: LayoutProps) {
+  const params = await props.params;
+  const locale = params.locale as Locale;
+
+  if (!SUPPORTED_LOCALES.includes(locale)) {
+    notFound();
+  }
+
+  const dict = await getDictionary(locale);
+
+  return {
+    title: dict.title,
+  };
+}
+
+export default async function RootLayout(props: LayoutProps) {
+  const params = await props.params;
+  const locale = params.locale as Locale;
+
+  if (!SUPPORTED_LOCALES.includes(locale)) {
+    notFound();
+  }
+
+  const dict = await getDictionary(locale);
+
+  return (
+    <html lang={locale}>
+      <body>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                window.__i18n = ${JSON.stringify(dict)};
+                window.__locale = '${locale}';
+                
+                // Initialize i18n in client
+                if (window.__initI18n) {
+                  window.__initI18n(window.__i18n, window.__locale);
+                }
+              })();
+            `,
+          }}
+        />
+        {props.children}
+      </body>
+    </html>
+  );
+}
+```
+
+```typescript
+// components/ClientI18nInitializer.tsx
+
+"use client";
+
+import { useEffect } from "react";
+import { initializeI18n } from "@/lib/i18n/client";
+import { Dictionary, Locale } from "@/lib/i18n/dictionaries";
+
+declare global {
+  interface Window {
+    __i18n?: Dictionary;
+    __locale?: Locale;
+    __initI18n?: (dict: Dictionary, locale: Locale) => void;
+  }
+}
+
+export function ClientI18nInitializer() {
+  useEffect(() => {
+    // Initialize from server-injected globals
+    if (typeof window !== "undefined" && window.__i18n && window.__locale) {
+      initializeI18n(window.__i18n, window.__locale);
+    }
+
+    // Make initializeI18n available for inline script
+    window.__initI18n = initializeI18n;
+  }, []);
+
+  return null;
+}
+```
+
+```typescript
+// app/[locale]/layout.tsx (Updated)
+
+import { ReactNode } from "react";
+import { notFound } from "next/navigation";
+import { SUPPORTED_LOCALES } from "@/lib/i18n/config";
+import { getDictionary, Locale } from "@/lib/i18n/dictionaries";
+import { ClientI18nInitializer } from "@/components/ClientI18nInitializer";
+
+interface LayoutProps {
+  children: ReactNode;
+  params: Promise<{
+    locale: string;
+  }>;
+}
+
+export async function generateStaticParams() {
+  return SUPPORTED_LOCALES.map((locale) => ({
+    locale,
+  }));
+}
+
+export async function generateMetadata(props: LayoutProps) {
+  const params = await props.params;
+  const locale = params.locale as Locale;
+
+  if (!SUPPORTED_LOCALES.includes(locale)) {
+    notFound();
+  }
+
+  const dict = await getDictionary(locale);
+
+  return {
+    title: dict.title,
+  };
+}
+
+export default async function RootLayout(props: LayoutProps) {
+  const params = await props.params;
+  const locale = params.locale as Locale;
+
+  if (!SUPPORTED_LOCALES.includes(locale)) {
+    notFound();
+  }
+
+  const dict = await getDictionary(locale);
+
+  return (
+    <html lang={locale}>
+      <body>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                window.__i18n = ${JSON.stringify(dict)};
+                window.__locale = '${locale}';
+              })();
+            `,
+          }}
+        />
+        <ClientI18nInitializer />
+        {props.children}
+      </body>
+    </html>
+  );
+}
+```
+
+```typescript
+// app/[locale]/articles/page.tsx
+
+"use client";
+
+import { useEffect, useState } from "react";
+import { t, getDict } from "@/lib/i18n/client";
+import { Dictionary } from "@/lib/i18n/dictionaries";
+
+export default function ArticlesPage() {
+  const [dict, setDict] = useState<Dictionary | null>(null);
+
+  useEffect(() => {
+    // Get dictionary from client-side
+    setDict(getDict());
+  }, []);
+
+  if (!dict) {
+    return <p>{t("loading")}</p>;
+  }
+
+  return (
+    <div>
+      <h1>{dict.title}</h1>
+      <p>{dict.loading}</p>
+      <button>{dict.save}</button>
+    </div>
+  );
+}
+```
+
+```typescript
+// app/[locale]/page.tsx
+
+import { getDictionary, Locale } from "@/lib/i18n/dictionaries";
+import { notFound } from "next/navigation";
+import { SUPPORTED_LOCALES } from "@/lib/i18n/config";
+
+interface PageProps {
+  params: Promise<{
+    locale: string;
+  }>;
+}
+
+export async function generateStaticParams() {
+  return SUPPORTED_LOCALES.map((locale) => ({
+    locale,
+  }));
+}
+
+export default async function Page(props: PageProps) {
+  const params = await props.params;
+  const locale = params.locale as Locale;
+
+  if (!SUPPORTED_LOCALES.includes(locale)) {
+    notFound();
+  }
+
+  const dict = await getDictionary(locale);
+
+  return (
+    <main>
+      <h1>{dict.title}</h1>
+      <p>{dict.loading}</p>
+      <button>{dict.save}</button>
+    </main>
+  );
+}
+```
+
+```typescript
+// components/ArticleCard.tsx
+
+"use client";
+
+import { t } from "@/lib/i18n/client";
+
+interface ArticleCardProps {
+  title: string;
+  description: string;
+}
+
+export function ArticleCard({ title, description }: ArticleCardProps) {
+  return (
+    <div className="card">
+      <h2>{title}</h2>
+      <p>{description}</p>
+      <button>{t("save")}</button>
+    </div>
+  );
+}
+```
+
+```typescript
+// components/ErrorBoundary.tsx
+
+"use client";
+
+import { ReactNode } from "react";
+import { t } from "@/lib/i18n/client";
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <div className="error">{t("error")}</div>;
+    }
+
+    return this.props.children;
+  }
+}
+```
+
+**Usage Summary:**
+
+1. **Server-side (SSR)**: Use `getDictionary(locale)` directly
+2. **Client-side**: Use `t(key)` or `getDict()` 
+3. **No Context**: Dictionary is injected via script tag
+4. **No Custom Hooks**: Just plain functions
+5. **Minimal Code**: ~100 lines total
+
+=== PROMPT 10: PLATFORM SPECIFICS ===
+```typescript
+// app/[locale]/layout.tsx
+
+import { ReactNode } from "react";
+import { notFound } from "next/navigation";
+import { SUPPORTED_LOCALES } from "@/lib/i18n/config";
+import { getDictionary, Locale } from "@/lib/i18n/dictionaries";
+import { ClientI18nInitializer } from "@/components/ClientI18nInitializer";
+import prisma from "@/lib/prisma";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
+import "@/styles/globals.css";
+
+interface LayoutProps {
+  children: ReactNode;
+  params: Promise<{
+    locale: string;
+  }>;
+}
+
+export async function generateStaticParams() {
+  return SUPPORTED_LOCALES.map((locale) => ({
+    locale,
+  }));
+}
+
+export async function generateMetadata(props: LayoutProps) {
+  const params = await props.params;
+  const locale = params.locale as Locale;
+
+  if (!SUPPORTED_LOCALES.includes(locale)) {
+    notFound();
+  }
+
+  const dict = await getDictionary(locale);
+
+  return {
+    title: dict.title,
+    description: "Explore AI research papers with intelligent insights",
+    icons: {
+      icon: "/favicon.ico",
+    },
+  };
+}
+
+async function getInitialData() {
+  try {
+    // Fetch featured articles from database
+    const featuredArticles = await prisma.article.findMany({
+      where: {
+        featured: true,
+        publishedAt: {
+          not: null,
+        },
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        description: true,
+        theme_area: true,
+        viewCount: true,
+        coverImage: true,
+        publishedAt: true,
+      },
+      orderBy: {
+        publishedAt: "desc",
+      },
+      take: 6,
+    });
+
+    // Fetch statistics
+    const [
+      totalArticles,
+      totalUsers,
+      articlesThisWeek,
+    ] = await Promise.all([
+      prisma.article.count({
+        where: {
+          deletedAt: null,
+          publishedAt: {
+            not: null,
+          },
+        },
+      }),
+      prisma.user.count({
+        where: {
+          deletedAt: null,
+        },
+      }),
+      prisma.article.count({
+        where: {
+          publishedAt: {
+            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+          },
+          deletedAt: null,
+        },
+      }),
+    ]);
+
+    return {
+      featuredArticles,
+      stats: {
+        totalArticles,
+        totalUsers,
+        articlesThisWeek,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching initial data:", error);
+    return {
+      featuredArticles: [],
+      stats: {
+        totalArticles: 0,
+        totalUsers: 0,
+        articlesThisWeek: 0,
+      },
+    };
+  }
+}
+
+export default async function RootLayout(props: LayoutProps) {
+  const params = await props.params;
+  const locale = params.locale as Locale;
+
+  if (!SUPPORTED_LOCALES.includes(locale)) {
+    notFound();
+  }
+
+  const dict = await getDictionary(locale);
+  const initialData = await getInitialData();
+
+  return (
+    <html lang={locale} suppressHydrationWarning>
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#000000" />
+      </head>
+      <body>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                window.__i18n = ${JSON.stringify(dict)};
+                window.__locale = '${locale}';
+                window.__initialData = ${JSON.stringify(initialData)};
+              })();
+            `,
+          }}
+        />
+        <ClientI18nInitializer />
+        
+        <div className="min-h-screen flex flex-col bg-white">
+          <Navbar 
+            locale={locale}
+            initialStats={initialData.stats}
+          />
+          
+          <main className="flex-1">
+            {props.children}
+          </main>
+          
+          <Footer locale={locale} />
+        </div>
+      </body>
+    </html>
+  );
+}
+```
+
+```typescript
+// components/Navbar.tsx
+
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { getDict, getLocale } from "@/lib/i18n/client";
+import { Dictionary } from "@/lib/i18n/dictionaries";
+
+interface NavbarProps {
+  locale: string;
+  initialStats: {
+    totalArticles: number;
+    totalUsers: number;
+    articlesThisWeek: number;
+  };
+}
+
+export function Navbar({ locale, initialStats }: NavbarProps) {
+  const [dict, setDict] = useState<Dictionary | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setDict(getDict());
+  }, []);
+
+  if (!dict) {
+    return <nav className="bg-gray-100 h-16" />;
+  }
+
+  return (
+    <nav className="bg-white shadow-sm border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <Link href={`/${locale}`} className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">A</span>
+            </div>
+            <span className="text-xl font-bold text-gray-900">AILens</span>
+          </Link>
+
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center space-x-8">
+            <Link
+              href={`/${locale}/articles`}
+              className="text-gray-700 hover:text-blue-600 transition-colors"
+            >
+              Articles
+            </Link>
+            <Link
+              href={`/${locale}/explore`}
+              className="text-gray-700 hover:text-blue-600 transition-colors"
+            >
+              Explore
+            </Link>
+            <a
+              href="#stats"
+              className="text-gray-700 hover:text-blue-600 transition-colors"
+            >
+              Stats
+            </a>
+          </div>
+
+          {/* Stats Badge */}
+          <div className="hidden lg:flex items-center space-x-4 text-sm">
+            <div className="text-gray-600">
+              <span className="font-semibold text-gray-900">
+                {initialStats.totalArticles}
+              </span>
+              {" Articles"}
+            </div>
+            <div className="w-px h-4 bg-gray-300" />
+            <div className="text-gray-600">
+              <span className="font-semibold text-gray-900">
+                {initialStats.articlesThisWeek}
+              </span>
+              {" This Week"}
+            </div>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+            aria-label="Toggle menu"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+          </button>
+        </div>
+
+        {/* Mobile Menu */}
+        {isMenuOpen && (
+          <div className="md:hidden pb-4 space-y-2">
+            <Link
+              href={`/${locale}/articles`}
+              className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+            >
+              Articles
+            </Link>
+            <Link
+              href={`/${locale}/explore`}
+              className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+            >
+              Explore
+            </Link>
+            <a
+              href="#stats"
+              className="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+            >
+              Stats
+            </a>
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+}
+```
+
+```typescript
+// components/Footer.tsx
+
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { getDict } from "@/lib/i18n/client";
+import { Dictionary } from "@/lib/i18n/dictionaries";
+
+interface FooterProps {
+  locale: string;
+}
+
+export function Footer({ locale }: FooterProps) {
+  const [dict, setDict] = useState<Dictionary | null>(null);
+
+  useEffect(() => {
+    setDict(getDict());
+  }, []);
+
+  if (!dict) {
+    return <footer className="bg-gray-100 h-20" />;
+  }
+
+  return (
+    <footer className="bg-gray-50 border-t border-gray-200 mt-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          {/* Brand */}
+          <div>
+            <div className="flex items-center space-x-2 mb-4">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">A</span>
+              </div>
+              <span className="text-lg font-bold text-gray-900">AILens</span>
+            </div>
+            <p className="text-sm text-gray-600">
+              Explore AI research papers with intelligent insights.
+            </p>
+          </div>
+
+          {/* Links */}
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-4">Product</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link
+                  href={`/${locale}/articles`}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  Articles
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href={`/${locale}/explore`}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  Explore
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href={`/${locale}/api`}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  API
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Company */}
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-4">Company</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <a href="#about" className="text-gray-600 hover:text-gray-900">
+                  About
+                </a>
+              </li>
+              <li>
+                <a href="#blog" className="text-gray-600 hover:text-gray-900">
+                  Blog
+                </a>
+              </li>
+              <li>
+                <a href="#contact" className="text-gray-600 hover:text-gray-900">
+                  Contact
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-4">Legal</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <a href="#privacy" className="text-gray-600 hover:text-gray-900">
+                  Privacy
+                </a>
+              </li>
+              <li>
+                <a href="#terms" className="text-gray-600 hover:text-gray-900">
+                  Terms
+                </a>
+              </li>
+              <li>
+                <a href="#cookies" className="text-gray-600 hover:text-gray-900">
+                  Cookies
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom */}
+        <div className="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center">
+          <p className="text-sm text-gray-600">
+            © 2024 AILens. All rights reserved.
+          </p>
+          <div className="flex space-x-6 mt-4 md:mt-0">
+            <a href="#twitter" className="text-gray-400 hover:text-gray-600">
+              Twitter
+            </a>
+            <a href="#github" className="text-gray-400 hover:text-gray-600">
+              GitHub
+            </a>
+            <a href="#linkedin" className="text-gray-400 hover:text-gray-600">
+              LinkedIn
+            </a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+```
+
+```typescript
+// app/[locale]/articles/page.tsx
+
+import { notFound } from "next/navigation";
+import { SUPPORTED_LOCALES } from "@/lib/i18n/config";
+import { getDictionary, Locale } from "@/lib/i18n/dictionaries";
+import prisma from "@/lib/prisma";
+import { ArticleGrid } from "@/components/ArticleGrid";
+
+interface ArticlesPageProps {
+  params: Promise<{
+    locale: string;
+  }>;
+  searchParams: Promise<{
+    page?: string;
+    theme?: string;
+  }>;
+}
+
+export async function generateStaticParams() {
+  return SUPPORTED_LOCALES.map((locale) => ({
+    locale,
+  }));
+}
+
+async function getArticles(page: number = 1, theme?: string) {
+  const pageSize = 12;
+  const skip = (page - 1) * pageSize;
+
+  const where = {
+    deletedAt: null,
+    publishedAt: {
+      not: null,
+    },
+    ...(theme && { theme_area: theme }),
+  };
+
+  const [articles, total] = await Promise.all([
+    prisma.article.findMany({
+      where,
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        description: true,
+        theme_area: true,
+        tags: true,
+        viewCount: true,
+        coverImage: true,
+        publishedAt: true,
+

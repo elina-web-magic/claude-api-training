@@ -1,0 +1,36 @@
+[
+    {
+        "prompt_inputs": {
+            "framework": "Next.js (App Router)",
+            "orm": "Prisma ORM",
+            "database": "Vercel Postgres",
+            "platform": "web application"
+        },
+        "solution_criteria": [
+            "The solution defines the system goals, high-level architecture, and pros/cons.",
+            "The solution outlines a database schema structure including User, Account, Session, and Article models.",
+            "The solution defines the logical flow for a Cron Job to fetch articles from arXiv.",
+            "The solution defines an AI System Prompt that implements a Mermaid.js schema output constraint.",
+            "The solution defines an AI System Prompt with a strict JSON output instruction format matching the provided example."
+        ],
+        "task_description": "Design the architecture and data strategy for an AI research app MVP called AILens",
+        "scenario": "Scenario A: Standard Next.js Web App Architecture"
+    },
+    {
+        "prompt_inputs": {
+            "framework": "Next.js (App Router)",
+            "orm": "Prisma ORM",
+            "database": "Vercel Postgres",
+            "platform": "web application"
+        },
+        "solution_criteria": [
+            "The solution defines the system goals, high-level architecture, and pros/cons.",
+            "The solution outlines a database schema structure including User, Account, Session, and Article models.",
+            "The solution defines the logical flow for a Cron Job to fetch articles from arXiv.",
+            "The solution defines an AI System Prompt that implements a Mermaid.js schema output constraint.",
+            "The solution defines an AI System Prompt with a strict JSON output instruction format matching the provided example."
+        ],
+        "task_description": "Design the architecture and data strategy for an AI research app MVP called AILens",
+        "scenario": "Scenario B: Strict Next.js Web App Architecture"
+    }
+]

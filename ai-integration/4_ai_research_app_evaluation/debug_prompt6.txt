@@ -1,0 +1,492 @@
+
+```typescript
+// lib/mermaidValidator.ts
+
+export interface MermaidValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+  nodeCount: number;
+  edgeCount: number;
+  diagramType: 'graph' | 'flowchart' | 'unknown';
+}
+
+interface ParsedNode {
+  id: string;
+  label?: string;
+  shape?: string;
+}
+
+interface ParsedEdge {
+  from: string;
+  to: string;
+  label?: string;
+}
+
+/**
+ * Validates Mermaid flowchart/graph schema
+ * @param schema - Mermaid diagram code
+ * @returns Validation result with detailed errors and warnings
+ */
+export function validateMermaidSchema(schema: string): MermaidValidationResult {
+  const result: MermaidValidationResult = {
+    isValid: true,
+    errors: [],
+    warnings: [],
+    nodeCount: 0,
+    edgeCount: 0,
+    diagramType: 'unknown',
+  };
+
+  try {
+    // Step 1: Basic input validation
+    if (!schema || typeof schema !== 'string') {
+      result.errors.push('Schema must be a non-empty string');
+      result.isValid = false;
+      return result;
+    }
+
+    const trimmedSchema = schema.trim();
+
+    if (trimmedSchema.length === 0) {
+      result.errors.push('Schema cannot be empty');
+      result.isValid = false;
+      return result;
+    }
+
+    if (trimmedSchema.length > 10000) {
+      result.errors.push('Schema exceeds maximum length of 10000 characters');
+      result.isValid = false;
+      return result;
+    }
+
+    // Step 2: Check diagram type
+    const diagramTypeResult = extractDiagramType(trimmedSchema);
+    if (!diagramTypeResult.valid) {
+      result.errors.push(diagramTypeResult.error);
+      result.isValid = false;
+      return result;
+    }
+
+    result.diagramType = diagramTypeResult.type;
+
+    // Step 3: Parse lines
+    const lines = trimmedSchema.split('\n').map((line) => line.trim());
+
+    // Step 4: Validate first line
+    const firstLine = lines[0].toLowerCase();
+    if (!firstLine.startsWith('graph') && !firstLine.startsWith('flowchart')) {
+      result.errors.push(
+        `First line must start with 'graph' or 'flowchart', got: ${lines[0]}`
+      );
+      result.isValid = false;
+      return result;
+    }
+
+    // Step 5: Extract direction from first line
+    const directionResult = validateDirection(firstLine);
+    if (!directionResult.valid) {
+      result.warnings.push(directionResult.message);
+    }
+
+    // Step 6: Parse nodes and edges
+    const contentLines = lines.slice(1).filter((line) => line.length > 0 && !line.startsWith('%%'));
+
+    const parseResult = parseNodesAndEdges(contentLines);
+    if (!parseResult.valid) {
+      result.errors.push(...parseResult.errors);
+      result.isValid = false;
+    }
+
+    result.nodeCount = parseResult.nodes.length;
+    result.edgeCount = parseResult.edges.length;
+
+    // Step 7: Validate node and edge structure
+    const nodeValidation = validateNodes(parseResult.nodes);
+    if (!nodeValidation.valid) {
+      result.errors.push(...nodeValidation.errors);
+      result.isValid = false;
+    }
+
+    const edgeValidation = validateEdges(parseResult.edges, parseResult.nodes);
+    if (!edgeValidation.valid) {
+      result.errors.push(...edgeValidation.errors);
+      result.isValid = false;
+    }
+
+    if (!edgeValidation.valid) {
+      result.warnings.push(...edgeValidation.warnings);
+    }
+
+    // Step 8: Check for dangling nodes
+    const danglingResult = checkDanglingNodes(parseResult.nodes, parseResult.edges);
+    if (danglingResult.dangling.length > 0) {
+      result.warnings.push(
+        `${danglingResult.dangling.length} node(s) not connected: ${danglingResult.dangling.join(', ')}`
+      );
+    }
+
+    // Step 9: Check for cycles (warning for flowcharts)
+    if (result.diagramType === 'flowchart') {
+      const cycleResult = detectCycles(parseResult.nodes, parseResult.edges);
+      if (cycleResult.hasCycle) {
+        result.warnings.push(`Potential cycle detected: ${cycleResult.description}`);
+      }
+    }
+
+    // Step 10: Validate graph connectivity (warning if not connected)
+    if (parseResult.nodes.length > 1 && parseResult.edges.length === 0) {
+      result.warnings.push('Diagram has multiple nodes but no edges');
+    }
+
+    return result;
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown validation error';
+    result.errors.push(`Validation error: ${errorMessage}`);
+    result.isValid = false;
+    return result;
+  }
+}
+
+/**
+ * Extracts and validates diagram type
+ */
+function extractDiagramType(
+  schema: string
+): {
+  valid: boolean;
+  type: 'graph' | 'flowchart' | 'unknown';
+  error: string;
+} {
+  const firstLine = schema.split('\n')[0].toLowerCase().trim();
+
+  if (firstLine.startsWith('graph')) {
+    return { valid: true, type: 'graph', error: '' };
+  }
+
+  if (firstLine.startsWith('flowchart')) {
+    return { valid: true, type: 'flowchart', error: '' };
+  }
+
+  return {
+    valid: false,
+    type: 'unknown',
+    error: 'Schema must start with "graph" or "flowchart"',
+  };
+}
+
+/**
+ * Validates diagram direction (TB, LR, BT, RL)
+ */
+function validateDirection(firstLine: string): {
+  valid: boolean;
+  message: string;
+} {
+  const validDirections = ['tb', 'lr', 'bt', 'rl', 'td', 'dn'];
+  const parts = firstLine.split(/\s+/);
+
+  if (parts.length > 1) {
+    const direction = parts[1].toLowerCase();
+    if (!validDirections.includes(direction)) {
+      return {
+        valid: false,
+        message: `Unknown direction "${direction}". Valid directions: TB, LR, BT, RL, TD, DN`,
+      };
+    }
+  }
+
+  return { valid: true, message: '' };
+}
+
+/**
+ * Parses lines into nodes and edges
+ */
+function parseNodesAndEdges(
+  lines: string[]
+): {
+  valid: boolean;
+  nodes: ParsedNode[];
+  edges: ParsedEdge[];
+  errors: string[];
+} {
+  const nodes: ParsedNode[] = [];
+  const edges: ParsedEdge[] = [];
+  const errors: string[] = [];
+  const nodeIds = new Set<string>();
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+
+    if (line.length === 0 || line.startsWith('%%')) {
+      continue;
+    }
+
+    try {
+      // Try to parse as edge first (edges have connectors: -->, ---, -.->, etc.)
+      const edgeResult = parseEdgeLine(line);
+
+      if (edgeResult.isEdge) {
+        if (!edgeResult.valid) {
+          errors.push(`Line ${i + 2}: Invalid edge syntax: ${line}`);
+          continue;
+        }
+
+        edges.push(...edgeResult.edges);
+
+        // Register nodes from edges
+        for (const edge of edgeResult.edges) {
+          nodeIds.add(edge.from);
+          nodeIds.add(edge.to);
+        }
+      } else {
+        // Try to parse as node definition
+        const nodeResult = parseNodeLine(line);
+
+        if (nodeResult.valid) {
+          nodes.push(nodeResult.node);
+          nodeIds.add(nodeResult.node.id);
+        } else {
+          errors.push(`Line ${i + 2}: ${nodeResult.error}`);
+        }
+      }
+    } catch (error) {
+      errors.push(
+        `Line ${i + 2}: Parse error - ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    nodes,
+    edges,
+    errors,
+  };
+}
+
+/**
+ * Parses a node definition line
+ * Supports: A, A["label"], A[label], A((label)), A{label}, A([label]), A[[label]]
+ */
+function parseNodeLine(line: string): {
+  valid: boolean;
+  node: ParsedNode;
+  error: string;
+} {
+  // Extract node ID and optional label
+  const nodeIdPattern = /^([A-Za-z_][A-Za-z0-9_]*)\s*(?:\[+\(?\{?\[?["\(]*(.+?)["\)\}\]]*\]*/);
+  const match = line.match(nodeIdPattern);
+
+  if (!match) {
+    return {
+      valid: false,
+      node: { id: '', label: '' },
+      error: `Invalid node syntax: ${line}`,
+    };
+  }
+
+  const id = match[1];
+  const label = match[2] || '';
+
+  // Validate node ID
+  if (!isValidNodeId(id)) {
+    return {
+      valid: false,
+      node: { id: '', label: '' },
+      error: `Invalid node ID: "${id}". Node IDs must start with letter or underscore`,
+    };
+  }
+
+  return {
+    valid: true,
+    node: { id, label, shape: detectShape(line) },
+    error: '',
+  };
+}
+
+/**
+ * Parses an edge definition line
+ * Supports: A --> B, A -- label --> B, A -.- B, etc.
+ */
+function parseEdgeLine(
+  line: string
+): {
+  isEdge: boolean;
+  valid: boolean;
+  edges: ParsedEdge[];
+  error: string;
+} {
+  // Check if line contains edge connectors
+  const edgePattern =
+    /([A-Za-z_][A-Za-z0-9_]*)\s*(-+>|-+\||-+|-\.-+>|-\.-)(?:\s*\|?([^|]*)\|?)?\s*([A-Za-z_][A-Za-z0-9_]*)/g;
+
+  const matches = Array.from(line.matchAll(edgePattern));
+
+  if (matches.length === 0) {
+    return { isEdge: false, valid: true, edges: [], error: '' };
+  }
+
+  const edges: ParsedEdge[] = [];
+
+  for (const match of matches) {
+    const from = match[1];
+    const connector = match[2];
+    const label = match[3]?.trim() || '';
+    const to = match[4];
+
+    // Validate node IDs
+    if (!isValidNodeId(from) || !isValidNodeId(to)) {
+      return {
+        isEdge: true,
+        valid: false,
+        edges: [],
+        error: `Invalid node IDs in edge: ${line}`,
+      };
+    }
+
+    // Validate connector
+    if (!isValidConnector(connector)) {
+      return {
+        isEdge: true,
+        valid: false,
+        edges: [],
+        error: `Invalid connector: ${connector}`,
+      };
+    }
+
+    edges.push({ from, to, label });
+  }
+
+  return { isEdge: true, valid: true, edges, error: '' };
+}
+
+/**
+ * Validates node IDs format
+ */
+function isValidNodeId(id: string): boolean {
+  // Node ID must start with letter or underscore, followed by alphanumeric or underscore
+  return /^[A-Za-z_][A-Za-z0-9_]*$/.test(id) && id.length <= 50;
+}
+
+/**
+ * Validates edge connectors
+ */
+function isValidConnector(connector: string): boolean {
+  const validConnectors = [
+    '-->',
+    '--',
+    '-.-',
+    '--.->',
+    '-.->',
+    '-|',
+    '==',
+    '===',
+    '-->|',
+  ];
+
+  return validConnectors.some((valid) =>
+    connector.includes(valid.substring(0, 2))
+  );
+}
+
+/**
+ * Detects node shape from syntax
+ */
+function detectShape(line: string): string {
+  if (line.includes('((')) return 'circle';
+  if (line.includes('{')) return 'diamond';
+  if (line.includes('([')) return 'stadium';
+  if (line.includes('[[')) return 'subroutine';
+  if (line.includes('[|')) return 'cylinder';
+  if (line.includes('[(')) return 'trapezoid';
+  if (line.includes('[/')) return 'parallelogram';
+  return 'rectangle';
+}
+
+/**
+ * Validates nodes array
+ */
+function validateNodes(
+  nodes: ParsedNode[]
+): {
+  valid: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
+  const seenIds = new Set<string>();
+
+  if (nodes.length === 0) {
+    errors.push('No nodes defined in diagram');
+    return { valid: false, errors };
+  }
+
+  for (const node of nodes) {
+    // Check for duplicate IDs
+    if (seenIds.has(node.id)) {
+      errors.push(`Duplicate node ID: "${node.id}"`);
+    }
+    seenIds.add(node.id);
+
+    // Validate label length
+    if (node.label && node.label.length > 200) {
+      errors.push(
+        `Node "${node.id}" label exceeds 200 characters: ${node.label.substring(0, 50)}...`
+      );
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * Validates edges array
+ */
+function validateEdges(
+  edges: ParsedEdge[],
+  nodes: ParsedNode[]
+): {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+} {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const nodeIds = new Set(nodes.map((n) => n.id));
+
+  if (edges.length === 0 && nodes.length > 1) {
+    warnings.push('No edges defined between nodes');
+  }
+
+  for (let i = 0; i < edges.length; i++) {
+    const edge = edges[i];
+
+    // Validate node references
+    if (!nodeIds.has(edge.from)) {
+      errors.push(
+        `Edge ${i}: "from" node "${edge.from}" not defined`
+      );
+    }
+
+    if (!nodeIds.has(edge.to)) {
+      errors.push(
+        `Edge ${i}: "to" node "${edge.to}" not defined`
+      );
+    }
+
+    // Check for self-loops (usually a mistake)
+    if (edge.from === edge.to) {
+      warnings.push(`Edge ${i}: Self-loop detected on node "${edge.from}"`);
+    }
+
+    // Validate label
+    if (edge.label && edge.label.length > 100) {
+      errors.push(
+        `Edge ${i} label exceeds 100 characters: ${edge.label.substring(0, 50)}...`
+      );
+    }
+  }
+
+  return {
+    valid: errors.length === 0
+
