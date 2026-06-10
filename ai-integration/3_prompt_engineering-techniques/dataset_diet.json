@@ -1,49 +1,56 @@
 [
   {
     "prompt_inputs": {
-      "height": "165",
-      "weight": "68",
-      "goal": "balanced nutrition and weight maintenance",
-      "restrictions": "vegetarian, nut allergy"
+      "height": "168",
+      "weight": "61",
+      "goal": "lose current weight from 61kg to 55kg",
+      "restrictions": "exclude: onion, garlic, leek, shallot, broccoli, cabbage, cauliflower, brussels sprouts, beans, lentils, chickpeas, peas, wheat bread, pasta, rye bread, barley, milk, yogurt, soft cheese, apples, pears, mango, watermelon, dried fruit, mushrooms, asparagus, artichoke, sweet corn, carbonated drinks, sorbitol, mannitol, xylitol, honey, agave syrup, high-fructose corn syrup, peaches, plums, cherries, apricots, nectarines, persimmons, cashews, pistachios, processed meat, fried foods, spicy sauces, beer, chewing gum, protein bars"
     },
     "solution_criteria": [
-      "All meals are vegetarian with no meat, poultry, or fish",
-      "No nuts or nut-derived ingredients in any meal",
-      "Meal plan is compact and covers breakfast, lunch, and dinner for one day",
-      "Nutritionally balanced with adequate protein, carbohydrates, and healthy fats from non-nut sources"
+      "The plan covers exactly 1 day and explicitly mentions the luteal phase.",
+      "No excluded ingredients are present anywhere in the plan.",
+      "The day has exactly 3 meals and 1 snack.",
+      "All recipes realistically take under 20 minutes to prepare.",
+      "Evening meals are formulated to be anti-bloating/easy to digest.",
+      "The daily caloric total falls within a realistic range of 1500-1650 kcal."
     ],
-    "task_description": "Write a compact, concise 1 day meal plan for a single woman",
-    "scenario": "Testing with dietary restrictions: Create a meal plan for a woman with vegetarian preferences and a nut allergy, verifying that the plan avoids all restricted ingredients while maintaining nutritional balance"
+    "task_description": "Write a 1-day meal plan for a 37-year-old woman in the luteal phase",
+    "scenario": "Testing with extensive dietary exclusions and weight loss goal"
   },
   {
     "prompt_inputs": {
-      "height": "165",
-      "weight": "68",
-      "goal": "maintain weight on a tight grocery budget",
-      "restrictions": "no nuts or shellfish allergies; prefers vegetarian options when budget-friendly"
+      "height": "168",
+      "weight": "61",
+      "goal": "Balanced nutrition and weight maintenance",
+      "restrictions": "Vegetarian"
     },
     "solution_criteria": [
-      "All meals use affordable, widely-available ingredients costing under $15 total for the day",
-      "Meal plan minimizes food waste by reusing ingredients across multiple meals",
-      "Provides balanced nutrition meeting basic daily caloric and macronutrient needs for weight maintenance"
+      "The plan covers exactly 1 day and explicitly mentions the luteal phase.",
+      "No meat, poultry, or fish products are present anywhere in the plan.",
+      "The day has exactly 3 meals and 1 snack.",
+      "All recipes realistically take under 20 minutes to prepare.",
+      "Evening meals are formulated to be anti-bloating/easy to digest.",
+      "The daily caloric total falls within a realistic range of 1500-1650 kcal."
     ],
-    "task_description": "Write a compact, concise 1 day meal plan for a single woman",
-    "scenario": "Testing with budget consciousness: Design a meal plan for a single woman operating on a tight grocery budget, ensuring all meals are cost-effective and use affordable, accessible ingredients while avoiding food waste"
+    "task_description": "Write a 1-day meal plan for a 37-year-old woman in the luteal phase",
+    "scenario": "Testing with vegetarian diet, and weight maintenance goal"
   },
   {
     "prompt_inputs": {
-      "height": "165",
-      "weight": "68",
-      "goal": "weight loss",
-      "restrictions": "vegetarian, no dairy"
+      "height": "168",
+      "weight": "61",
+      "goal": "Support fitness goals with high-protein nutrition",
+      "restrictions": "Vegan"
     },
     "solution_criteria": [
-      "All three meals (breakfast, lunch, dinner) can be prepared in under 30 minutes each",
-      "Meal plan is nutritionally balanced and supports weight loss goal",
-      "All recipes comply with vegetarian and dairy-free restrictions",
-      "Includes specific meal names and basic preparation instructions"
+      "The plan covers exactly 1 day and explicitly mentions the luteal phase.",
+      "No animal products (meat, poultry, fish, dairy, eggs, honey) are present anywhere in the plan.",
+      "The day has exactly 3 meals and 1 snack.",
+      "All recipes realistically take under 20 minutes to prepare.",
+      "Evening meals are formulated to be anti-bloating/easy to digest.",
+      "The daily caloric total falls within a realistic range of 1500-1650 kcal."
     ],
-    "task_description": "Write a compact, concise 1 day meal plan for a single woman",
-    "scenario": "Testing with time constraints: Generate a meal plan for a busy professional woman with minimal cooking time available, focusing on quick-prep meals and assessing whether recipes can realistically be prepared in under 30 minutes each"
+    "task_description": "Write a 1-day meal plan for a 37-year-old woman in the luteal phase",
+    "scenario": "Testing with vegan diet and fitness goals"
   }
 ]
