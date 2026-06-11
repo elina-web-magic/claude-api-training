@@ -171,3 +171,74 @@ Using an exact structural template (One-Shot Prompting) shows the model the idea
 - Generating structured data (Markdown, tables, lists, JSON).
 - Forcing the model to respond in a specific persona (e.g., a strict lawyer or concise programmer).
 - Data Extraction without generating conversational fluff.
+
+## 6. Structure with XML Tags
+
+### 6. Problem
+
+When building prompts that include a lot of content, Claude can sometimes struggle to understand which pieces of text belong together or what different sections represent. Without clear boundaries, the model might confuse instructions with the data it's supposed to analyze.
+
+### 6. Solution & Best Practice
+
+Use **XML tags** to provide a simple way to add structure and clarity to your prompts.
+
+- Create custom, descriptive tag names (e.g., `<sales_records>` instead of `<data>`, or `<athlete_information>`).
+- Wrap distinct parts of your prompt (context, data, examples, formatting) in these tags.
+- This creates clear delimiters, making it explicitly clear to Claude how to parse your intent.
+
+### 6. Use Cases
+
+- Interpolating multiple dynamic variables into a prompt.
+- Separating long context documents from the actual user query.
+- Differentiating between code (`<my_code>`) and documentation (`<docs>`).
+
+---
+
+## 7. Providing Examples (One-Shot & Multi-Shot Prompting)
+
+### 7. Problem
+
+Even with clear instructions, the model might still misunderstand the desired format, fail to catch corner cases (like sarcasm in sentiment analysis), or ignore constraints because it defaults to its standard behavior.
+
+### 7. Solution & Best Practice
+
+Provide **Examples** within your prompt.
+
+- Examples should *complement*, not replace, your core guidelines. If you remove strict rules and leave only an example, the model might lose the hard constraints (like a strict calorie limit).
+- Wrap examples in XML tags like `<sample_input>` and `<ideal_output>`.
+- Add context explaining *why* the example output is good. This helps the model generalize the rules.
+
+### 7. Use Cases
+
+- Handling tricky corner cases (e.g., classifying sarcastic text).
+- Enforcing complex formatting that is hard to describe with words alone.
+- Calibrating the tone of voice or style of the output.
+
+---
+
+## 8. LLM-as-a-Judge Hallucinations & Chain of Thought
+
+### 8. Problem
+
+When using an LLM to evaluate the output of another prompt (Prompt Evaluation), the judge might "hallucinate" math. For example, it might incorrectly claim that 1608 kcal exceeds a limit of 1500-1650 kcal, penalizing a perfectly valid output.
+
+### 8. Solution & Best Practice (Chain of Thought)
+
+LLMs cannot do math reliably in their heads. You must give the judge a "scratchpad" to think step-by-step before it outputs a final score.
+
+- Add a `"scratchpad"` field as the very first item in your JSON output format.
+- Instruct the judge to use the scratchpad to extract numbers and explicitly verify if they fall within the required boundaries.
+
+---
+
+## 9. Why LLM Judges Are Excessively Strict
+
+### 9. Problem
+
+LLMs (like Claude or GPT) are notoriously harsh graders on a 1-10 scale. They hesitate to give a perfect 10 because "nothing is perfect." Even if you instruct them to grade *only* based on the provided criteria, they will often invent new criteria (e.g., "formatting inconsistency", "lack of hydration advice") just to justify giving a 9 instead of a 10.
+
+### 9. Solution & Best Practice
+
+- Avoid using a subjective 1-10 scale. Instead, use a binary `Pass / Fail` or `1 / 0` system for each specific criterion.
+- If you must use a scale, write highly aggressive instructions: *"If all criteria are met, you MUST score 10. DO NOT deduct points for anything not explicitly listed in the criteria."*
+- Consider using **Code-based grading** (e.g., Python scripts checking boundaries) instead of LLMs for strict mathematical or presence checks.
