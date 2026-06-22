@@ -242,3 +242,49 @@ LLMs (like Claude or GPT) are notoriously harsh graders on a 1-10 scale. They he
 - Avoid using a subjective 1-10 scale. Instead, use a binary `Pass / Fail` or `1 / 0` system for each specific criterion.
 - If you must use a scale, write highly aggressive instructions: *"If all criteria are met, you MUST score 10. DO NOT deduct points for anything not explicitly listed in the criteria."*
 - Consider using **Code-based grading** (e.g., Python scripts checking boundaries) instead of LLMs for strict mathematical or presence checks.
+
+### 10. Markdown with Mermaid
+
+> Generates documentation with full markdown formatting and mermaid diagrams, ready to be pasted into a .md file.
+
+**When to use:** editing documentation, schemas, architectural diagrams in a single block, ready to be saved.
+**Problem it solves:** the internal ` ```mermaid ` breaks the outer ` ```markdown ` block — we use 4 backticks for the outer block.
+
+```text
+Wrap the entire output in a single markdown code block using 4 backticks (````markdown).
+Do not add any text outside the code block.
+Write the document in English.
+
+## Document structure rules
+- One H1 heading (#) at the top — the document title
+- All other headings must be H2 (##) or H3 (###)
+- Separate every section with a horizontal rule (---)
+- Use plain bullet lists (-) for enumerations — no nested bullet walls
+- Keep paragraphs short and direct
+
+## Code blocks
+- Use ```mermaid for diagrams (3 backticks inside the outer 4-backtick fence)
+- Use ```text for plain text examples or rules
+- Use the correct language tag for code: ```typescript, ```python, ```bash, etc.
+- Never use an untagged code block
+
+## Mermaid diagram rules
+- Use flowchart TD or flowchart LR
+- Style all nodes with classDef using fill, stroke, stroke-width, color
+- Assign each logical group its own class
+- After the diagram, add a ## Legend section with a markdown table:
+  | Color | Meaning |
+  | :--- | :--- |
+  | 🔵 Blue | ... |
+  | 🟣 Purple | ... |
+  (use emoji + color name + layer meaning)
+
+## Color palette for classDef (use consistently)
+- Purple (#ede9fe / #7c3aed / #1e1b4b) — server / infrastructure
+- Blue (#bae6fd / #0284c7 / #082f49) — client / UI layer
+- Orange (#ffedd5 / #ea580c / #431407) — state / cache / data
+- Green (#bbf7d0 / #16a34a / #052e16) — logic / services / actions
+- Red (#fee2e2 / #dc2626 / #450a0a) — failure / rollback
+```
+
+---
