@@ -1,0 +1,78 @@
+[
+  {
+    "scenario": "Wallet-per-currency record uniqueness",
+    "task_description": "Verify claims from balances.md for LLM hallucinations and factual inaccuracies.",
+    "prompt_inputs": {
+      "document_section": "The gambling platform architecture dictates that players maintain separate wallets for each supported currency. To ensure transaction integrity, the database enforces exactly one active record per currency wallet per player.",
+      "claim_type": "technical_fact",
+      "original_line": "Players have one wallet per currency with exactly one record."
+    },
+    "solution_criteria": [
+      "Must assign one of: ACCURATE, HALLUCINATED, INACCURATE, AMBIGUOUS",
+      "Must use structured technical document headings (no raw labels like Line:, Status:)",
+      "Must include the exact original text",
+      "Must include a proposed correction or 'No change needed'",
+      "Must include reasoning citing source evidence"
+    ]
+  },
+  {
+    "scenario": "Seven balance pockets \u2014 exact names",
+    "task_description": "Verify claims from balances.md for LLM hallucinations and factual inaccuracies.",
+    "prompt_inputs": {
+      "document_section": "A wallet contains multiple balance segments to track different funds. These include main cash, bonus, and withdrawal-pending. There are no sports-specific pockets in the current MVP.",
+      "claim_type": "technical_fact",
+      "original_line": "Seven balance 'pockets' exist per wallet: main cash, committed cash, bonus, deposit-pending, withdrawal-pending, sports bonus, sports locked."
+    },
+    "solution_criteria": [
+      "Must assign one of: ACCURATE, HALLUCINATED, INACCURATE, AMBIGUOUS",
+      "Must verify both the count (seven) and the exact pocket names",
+      "Must use structured technical document headings (no raw labels like Line:, Status:)",
+      "Must include a proposed correction or 'No change needed'"
+    ]
+  },
+  {
+    "scenario": "Exchange rate cache duration (~15 minutes)",
+    "task_description": "Verify claims from balances.md for LLM hallucinations and factual inaccuracies.",
+    "prompt_inputs": {
+      "document_section": "The platform fetches real-time exchange rates via API for every transaction. No caching layer is implemented for exchange rates to prevent arbitrage.",
+      "claim_type": "technical_fact",
+      "original_line": "Exchange rates are cached for ~15 minutes and updated asynchronously."
+    },
+    "solution_criteria": [
+      "Must assign one of: ACCURATE, HALLUCINATED, INACCURATE, AMBIGUOUS",
+      "Must flag that the exact 15-minute duration is a high-risk hallucination candidate",
+      "Must use structured technical document headings (no raw labels like Line:, Status:)",
+      "Must include a proposed correction or 'No change needed'"
+    ]
+  },
+  {
+    "scenario": "Default wagering multiplier of 3 for new brands",
+    "task_description": "Verify claims from balances.md for LLM hallucinations and factual inaccuracies.",
+    "prompt_inputs": {
+      "document_section": "When a new brand is created without explicit wagering configuration, the system automatically applies a fallback multiplier. This default value is set to 3 across the platform.",
+      "claim_type": "default_value",
+      "original_line": "New brands with no wagering config get a default multiplier of 3."
+    },
+    "solution_criteria": [
+      "Must assign one of: ACCURATE, HALLUCINATED, INACCURATE, AMBIGUOUS",
+      "Must verify the exact multiplier value (3) as a high-risk hallucination candidate",
+      "Must use structured technical document headings (no raw labels like Line:, Status:)",
+      "Must include a proposed correction or 'No change needed'"
+    ]
+  },
+  {
+    "scenario": "Credit corrections always go to main cash pocket",
+    "task_description": "Verify claims from balances.md for LLM hallucinations and factual inaccuracies.",
+    "prompt_inputs": {
+      "document_section": "Credit corrections are manual adjustments made by administrators. According to compliance rules, these corrections must always be applied directly to the main cash pocket.",
+      "claim_type": "business_rule",
+      "original_line": "Credit corrections always add to the main cash pocket."
+    },
+    "solution_criteria": [
+      "Must assign one of: ACCURATE, HALLUCINATED, INACCURATE, AMBIGUOUS",
+      "Must verify the direction rule (main cash pocket specifically)",
+      "Must use structured technical document headings (no raw labels like Line:, Status:)",
+      "Must include a proposed correction or 'No change needed'"
+    ]
+  }
+]

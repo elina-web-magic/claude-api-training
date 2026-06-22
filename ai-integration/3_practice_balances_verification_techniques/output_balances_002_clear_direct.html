@@ -1,0 +1,478 @@
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Prompt Evaluation Report</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                margin: 0;
+                padding: 20px;
+                color: #333;
+            }
+            .header {
+                background-color: #f0f0f0;
+                padding: 20px;
+                border-radius: 5px;
+                margin-bottom: 20px;
+            }
+            .summary-stats {
+                display: flex;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .stat-box {
+                background-color: #fff;
+                border-radius: 5px;
+                padding: 15px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                flex-basis: 30%;
+                min-width: 200px;
+            }
+            .stat-value {
+                font-size: 24px;
+                font-weight: bold;
+                margin-top: 5px;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+            }
+            th {
+                background-color: #4a4a4a;
+                color: white;
+                text-align: left;
+                padding: 12px;
+            }
+            td {
+                padding: 10px;
+                border-bottom: 1px solid #ddd;
+                vertical-align: top;
+            }
+            tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+            .output-cell {
+                white-space: pre-wrap;
+            }
+            .score {
+                font-weight: bold;
+                padding: 5px 10px;
+                border-radius: 3px;
+                display: inline-block;
+            }
+            .score-high {
+                background-color: #c8e6c9;
+                color: #2e7d32;
+            }
+            .score-medium {
+                background-color: #fff9c4;
+                color: #f57f17;
+            }
+            .score-low {
+                background-color: #ffcdd2;
+                color: #c62828;
+            }
+            .output {
+                overflow: auto;
+                white-space: pre-wrap;
+            }
+
+            .output pre {
+                background-color: #f5f5f5;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                padding: 10px;
+                margin: 0;
+                font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+                font-size: 14px;
+                line-height: 1.4;
+                color: #333;
+                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+                overflow-x: auto;
+                white-space: pre-wrap; 
+                word-wrap: break-word; 
+            }
+
+            td {
+                width: 20%;
+            }
+            .score-col {
+                width: 80px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>Prompt Evaluation Report</h1>
+            <div class="summary-stats">
+                <div class="stat-box">
+                    <div>Total Test Cases</div>
+                    <div class="stat-value">5</div>
+                </div>
+                <div class="stat-box">
+                    <div>Average Score</div>
+                    <div class="stat-value">7.0 / 10</div>
+                </div>
+                <div class="stat-box">
+                    <div>Pass Rate (≥7)</div>
+                    <div class="stat-value">60.0%</div>
+                </div>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Scenario</th>
+                    <th>Prompt Inputs</th>
+                    <th>Solution Criteria</th>
+                    <th>Output</th>
+                    <th>Score</th>
+                    <th>Reasoning</th>
+                </tr>
+            </thead>
+            <tbody>
+    
+            <tr>
+                <td>Wallet-per-currency record uniqueness</td>
+                <td class="prompt-inputs"><strong>document_section:</strong> The gambling platform architecture dictates that players maintain separate wallets for each supported currency. To ensure transaction integrity, the database enforces exactly one active record per currency wallet per player.<br><strong>claim_type:</strong> technical_fact<br><strong>original_line:</strong> Players have one wallet per currency with exactly one record.</td>
+                <td class="criteria">• Must assign one of: ACCURATE, HALLUCINATED, INACCURATE, AMBIGUOUS<br>• Must use structured technical document headings (no raw labels like Line:, Status:)<br>• Must include the exact original text<br>• Must include a proposed correction or 'No change needed'<br>• Must include reasoning citing source evidence</td>
+                <td class="output"><pre>=== FULL PROMPT SENT TO AI ===
+
+You are a strict technical auditor for a Gambling platform documentation system.
+
+Your task is to verify a specific claim from the document `balances.md` against the authoritative source documentation.
+
+The document being verified describes the Gambling platform's wallet and balance system (real + bonus money, multi-currency).
+
+The gambling platform architecture dictates that players maintain separate wallets for each supported currency. To ensure transaction integrity, the database enforces exactly one active record per currency wallet per player.
+
+technical_fact
+
+Players have one wallet per currency with exactly one record.
+
+Analyze whether the original line is:
+
+1. Accurate — confirmed by authoritative source
+2. Hallucinated — invented by AI with no basis in source
+3. Inaccurate — contradicts or distorts source material
+4. Ambiguous — cannot be confirmed or denied without more source data
+
+Provide your output exactly in the following format:
+https://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1
+
+status:
+
+[Insert classification: ACCURATE, HALLUCINATED, INACCURATE, or AMBIGUOUS]
+
+now:
+
+- [Insert the original line here]
+
+to be:
+
+[Insert the corrected line here based on the source documentation. Be explicit about exactly which details from the original line are incorrect or unsupported. If the original line is accurate, write "No change needed"]
+
+Wrap the entire output in a single markdown code block using 4 backticks (````markdown).
+Do not add any text outside the code block.
+Write the document in English.
+
+
+
+=== AI OUTPUT ===
+````markdown
+https://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1
+
+status:
+
+ACCURATE
+
+now:
+
+- Players have one wallet per currency with exactly one record.
+
+to be:
+
+No change needed
+````</pre></td>
+                <td class="score-col"><span class="score score-low">5</span></td>
+                <td class="reasoning">The solution meets all MANDATORY requirements: it uses the correct format with GitHub link, proper labels ('now:' and 'to be:'), no H1-H3 headings, and is wrapped in exactly 4 backticks with markdown identifier. However, it fails a critical secondary criterion by providing no reasoning or source evidence to support the ACCURATE classification. The task explicitly requires verification 'against the authoritative source documentation,' but the solution provides no citation of such sources. Given that no actual source documentation was provided in the task inputs, the appropriate classification should likely be AMBIGUOUS rather than ACCURATE. The solution makes an unsupported claim without demonstrating access to or analysis of authoritative sources.</td>
+            </tr>
+        
+            <tr>
+                <td>Exchange rate cache duration (~15 minutes)</td>
+                <td class="prompt-inputs"><strong>document_section:</strong> The platform fetches real-time exchange rates via API for every transaction. No caching layer is implemented for exchange rates to prevent arbitrage.<br><strong>claim_type:</strong> technical_fact<br><strong>original_line:</strong> Exchange rates are cached for ~15 minutes and updated asynchronously.</td>
+                <td class="criteria">• Must assign one of: ACCURATE, HALLUCINATED, INACCURATE, AMBIGUOUS<br>• Must flag that the exact 15-minute duration is a high-risk hallucination candidate<br>• Must use structured technical document headings (no raw labels like Line:, Status:)<br>• Must include a proposed correction or 'No change needed'</td>
+                <td class="output"><pre>=== FULL PROMPT SENT TO AI ===
+
+You are a strict technical auditor for a Gambling platform documentation system.
+
+Your task is to verify a specific claim from the document `balances.md` against the authoritative source documentation.
+
+The document being verified describes the Gambling platform's wallet and balance system (real + bonus money, multi-currency).
+
+The platform fetches real-time exchange rates via API for every transaction. No caching layer is implemented for exchange rates to prevent arbitrage.
+
+technical_fact
+
+Exchange rates are cached for ~15 minutes and updated asynchronously.
+
+Analyze whether the original line is:
+
+1. Accurate — confirmed by authoritative source
+2. Hallucinated — invented by AI with no basis in source
+3. Inaccurate — contradicts or distorts source material
+4. Ambiguous — cannot be confirmed or denied without more source data
+
+Provide your output exactly in the following format:
+https://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1
+
+status:
+
+[Insert classification: ACCURATE, HALLUCINATED, INACCURATE, or AMBIGUOUS]
+
+now:
+
+- [Insert the original line here]
+
+to be:
+
+[Insert the corrected line here based on the source documentation. Be explicit about exactly which details from the original line are incorrect or unsupported. If the original line is accurate, write "No change needed"]
+
+Wrap the entire output in a single markdown code block using 4 backticks (````markdown).
+Do not add any text outside the code block.
+Write the document in English.
+
+
+
+=== AI OUTPUT ===
+````markdown
+https://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1
+
+status:
+
+INACCURATE
+
+now:
+
+- Exchange rates are cached for ~15 minutes and updated asynchronously.
+
+to be:
+
+- Exchange rates are fetched via API in real-time for every transaction with no caching layer implemented to prevent arbitrage.
+
+The original line contradicts the authoritative source documentation which explicitly states that the platform fetches real-time exchange rates via API for every transaction and that no caching layer is implemented. The claim of ~15 minute caching with asynchronous updates directly conflicts with this requirement.
+````</pre></td>
+                <td class="score-col"><span class="score score-medium">7</span></td>
+                <td class="reasoning">The solution meets all mandatory requirements: it uses the correct GitHub link format, includes 'now:' and 'to be:' labels, avoids H1/H2/H3 headings, and is wrapped in exactly 4 backticks with markdown specification. The classification of INACCURATE is correct given the direct contradiction between the document section (real-time, no caching) and the original line (15-minute caching). However, the solution falls short on secondary criteria by not explicitly highlighting the 15-minute duration as a hallucination risk and not using structured technical document headings beyond the basic labels. The correction provided is accurate and well-reasoned, but the presentation could be more rigorous in flagging the specific hallucination risk.</td>
+            </tr>
+        
+            <tr>
+                <td>Seven balance pockets — exact names</td>
+                <td class="prompt-inputs"><strong>document_section:</strong> A wallet contains multiple balance segments to track different funds. These include main cash, bonus, and withdrawal-pending. There are no sports-specific pockets in the current MVP.<br><strong>claim_type:</strong> technical_fact<br><strong>original_line:</strong> Seven balance 'pockets' exist per wallet: main cash, committed cash, bonus, deposit-pending, withdrawal-pending, sports bonus, sports locked.</td>
+                <td class="criteria">• Must assign one of: ACCURATE, HALLUCINATED, INACCURATE, AMBIGUOUS<br>• Must verify both the count (seven) and the exact pocket names<br>• Must use structured technical document headings (no raw labels like Line:, Status:)<br>• Must include a proposed correction or 'No change needed'</td>
+                <td class="output"><pre>=== FULL PROMPT SENT TO AI ===
+
+You are a strict technical auditor for a Gambling platform documentation system.
+
+Your task is to verify a specific claim from the document `balances.md` against the authoritative source documentation.
+
+The document being verified describes the Gambling platform's wallet and balance system (real + bonus money, multi-currency).
+
+A wallet contains multiple balance segments to track different funds. These include main cash, bonus, and withdrawal-pending. There are no sports-specific pockets in the current MVP.
+
+technical_fact
+
+Seven balance 'pockets' exist per wallet: main cash, committed cash, bonus, deposit-pending, withdrawal-pending, sports bonus, sports locked.
+
+Analyze whether the original line is:
+
+1. Accurate — confirmed by authoritative source
+2. Hallucinated — invented by AI with no basis in source
+3. Inaccurate — contradicts or distorts source material
+4. Ambiguous — cannot be confirmed or denied without more source data
+
+Provide your output exactly in the following format:
+https://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1
+
+status:
+
+[Insert classification: ACCURATE, HALLUCINATED, INACCURATE, or AMBIGUOUS]
+
+now:
+
+- [Insert the original line here]
+
+to be:
+
+[Insert the corrected line here based on the source documentation. Be explicit about exactly which details from the original line are incorrect or unsupported. If the original line is accurate, write "No change needed"]
+
+Wrap the entire output in a single markdown code block using 4 backticks (````markdown).
+Do not add any text outside the code block.
+Write the document in English.
+
+
+
+=== AI OUTPUT ===
+````markdown
+https://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1
+
+status:
+
+INACCURATE
+
+now:
+
+- Seven balance 'pockets' exist per wallet: main cash, committed cash, bonus, deposit-pending, withdrawal-pending, sports bonus, sports locked.
+
+to be:
+
+- A wallet contains multiple balance segments including main cash, bonus, and withdrawal-pending to track different funds. There are no sports-specific pockets in the current MVP. The original line incorrectly lists seven pockets and includes sports bonus and sports locked, which are explicitly stated as not present in the current version.
+````</pre></td>
+                <td class="score-col"><span class="score score-high">10</span></td>
+                <td class="reasoning">The solution meets all mandatory requirements: it uses the exact GitHub link format, includes 'now:' and 'to be:' labels, contains no H1/H2/H3 headings, and is wrapped in exactly 4 backticks with markdown language specification. The classification of INACCURATE is correct—the source states only three pockets exist (main cash, bonus, withdrawal-pending) with no sports-specific pockets in the MVP, directly contradicting the claim of seven pockets including sports bonus and sports locked. The correction accurately identifies the discrepancies and provides the authoritative information from the source documentation. All secondary criteria are met: the count is verified, pocket names are checked, and a clear proposed correction is provided.</td>
+            </tr>
+        
+            <tr>
+                <td>Default wagering multiplier of 3 for new brands</td>
+                <td class="prompt-inputs"><strong>document_section:</strong> When a new brand is created without explicit wagering configuration, the system automatically applies a fallback multiplier. This default value is set to 3 across the platform.<br><strong>claim_type:</strong> default_value<br><strong>original_line:</strong> New brands with no wagering config get a default multiplier of 3.</td>
+                <td class="criteria">• Must assign one of: ACCURATE, HALLUCINATED, INACCURATE, AMBIGUOUS<br>• Must verify the exact multiplier value (3) as a high-risk hallucination candidate<br>• Must use structured technical document headings (no raw labels like Line:, Status:)<br>• Must include a proposed correction or 'No change needed'</td>
+                <td class="output"><pre>=== FULL PROMPT SENT TO AI ===
+
+You are a strict technical auditor for a Gambling platform documentation system.
+
+Your task is to verify a specific claim from the document `balances.md` against the authoritative source documentation.
+
+The document being verified describes the Gambling platform's wallet and balance system (real + bonus money, multi-currency).
+
+When a new brand is created without explicit wagering configuration, the system automatically applies a fallback multiplier. This default value is set to 3 across the platform.
+
+default_value
+
+New brands with no wagering config get a default multiplier of 3.
+
+Analyze whether the original line is:
+
+1. Accurate — confirmed by authoritative source
+2. Hallucinated — invented by AI with no basis in source
+3. Inaccurate — contradicts or distorts source material
+4. Ambiguous — cannot be confirmed or denied without more source data
+
+Provide your output exactly in the following format:
+https://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1
+
+status:
+
+[Insert classification: ACCURATE, HALLUCINATED, INACCURATE, or AMBIGUOUS]
+
+now:
+
+- [Insert the original line here]
+
+to be:
+
+[Insert the corrected line here based on the source documentation. Be explicit about exactly which details from the original line are incorrect or unsupported. If the original line is accurate, write "No change needed"]
+
+Wrap the entire output in a single markdown code block using 4 backticks (````markdown).
+Do not add any text outside the code block.
+Write the document in English.
+
+
+
+=== AI OUTPUT ===
+````markdown
+https://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1
+
+status:
+
+AMBIGUOUS
+
+now:
+
+- New brands with no wagering config get a default multiplier of 3.
+
+to be:
+
+- The claim regarding a default multiplier value of 3 for new brands without explicit wagering configuration cannot be verified against the provided source material. The statement requires confirmation from authoritative platform documentation specifying: (1) whether a default multiplier is applied automatically, (2) the exact numeric value of this default, and (3) whether this applies universally across all brand types or only under specific conditions.
+````</pre></td>
+                <td class="score-col"><span class="score score-medium">6</span></td>
+                <td class="reasoning">The solution meets all mandatory requirements: it uses the correct format with GitHub link, proper labels, no H1/H2/H3 headings, and is wrapped in 4 backticks. The AMBIGUOUS classification is defensible given no source material was provided. However, it fails secondary criteria by not providing a concrete corrected line or 'No change needed' statement in the 'to be:' section—instead offering meta-commentary about what verification would require. The solution also doesn't adequately address the high-risk hallucination aspect of the specific numeric value '3'. While the reasoning is sound, the output format for the correction doesn't match the expected structure of providing either a revised statement or explicit confirmation that no change is needed.</td>
+            </tr>
+        
+            <tr>
+                <td>Credit corrections always go to main cash pocket</td>
+                <td class="prompt-inputs"><strong>document_section:</strong> Credit corrections are manual adjustments made by administrators. According to compliance rules, these corrections must always be applied directly to the main cash pocket.<br><strong>claim_type:</strong> business_rule<br><strong>original_line:</strong> Credit corrections always add to the main cash pocket.</td>
+                <td class="criteria">• Must assign one of: ACCURATE, HALLUCINATED, INACCURATE, AMBIGUOUS<br>• Must verify the direction rule (main cash pocket specifically)<br>• Must use structured technical document headings (no raw labels like Line:, Status:)<br>• Must include a proposed correction or 'No change needed'</td>
+                <td class="output"><pre>=== FULL PROMPT SENT TO AI ===
+
+You are a strict technical auditor for a Gambling platform documentation system.
+
+Your task is to verify a specific claim from the document `balances.md` against the authoritative source documentation.
+
+The document being verified describes the Gambling platform's wallet and balance system (real + bonus money, multi-currency).
+
+Credit corrections are manual adjustments made by administrators. According to compliance rules, these corrections must always be applied directly to the main cash pocket.
+
+business_rule
+
+Credit corrections always add to the main cash pocket.
+
+Analyze whether the original line is:
+
+1. Accurate — confirmed by authoritative source
+2. Hallucinated — invented by AI with no basis in source
+3. Inaccurate — contradicts or distorts source material
+4. Ambiguous — cannot be confirmed or denied without more source data
+
+Provide your output exactly in the following format:
+https://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1
+
+status:
+
+[Insert classification: ACCURATE, HALLUCINATED, INACCURATE, or AMBIGUOUS]
+
+now:
+
+- [Insert the original line here]
+
+to be:
+
+[Insert the corrected line here based on the source documentation. Be explicit about exactly which details from the original line are incorrect or unsupported. If the original line is accurate, write "No change needed"]
+
+Wrap the entire output in a single markdown code block using 4 backticks (````markdown).
+Do not add any text outside the code block.
+Write the document in English.
+
+
+
+=== AI OUTPUT ===
+````markdown
+https://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1
+
+status:
+
+AMBIGUOUS
+
+now:
+
+- Credit corrections are manual adjustments made by administrators that must always be applied directly to the main cash pocket according to compliance rules.
+
+to be:
+
+- Cannot verify the specific compliance rule regarding credit corrections being applied exclusively to the main cash pocket without access to the authoritative source documentation. The statement may be accurate but requires confirmation against the actual balances.md source material and compliance rule documentation.
+````</pre></td>
+                <td class="score-col"><span class="score score-medium">7</span></td>
+                <td class="reasoning">The solution meets all mandatory formatting requirements: it uses the correct GitHub link format, includes 'now:' and 'to be:' labels, avoids H1/H2/H3 headings, and is wrapped in exactly 4 backticks. However, it falls short on secondary criteria by failing to rigorously verify the directional rule about the main cash pocket and by providing an insufficiently specific correction proposal. The AMBIGUOUS classification is defensible given the lack of source access, but the solution should have been more explicit about what specific aspects cannot be verified (e.g., the 'always' qualifier, the 'add to' vs 'applied to' distinction, or the compliance rule citation). The 'to be:' section reads as a non-answer rather than a concrete proposed correction.</td>
+            </tr>
+        
+            </tbody>
+        </table>
+    </body>
+    </html>
+    

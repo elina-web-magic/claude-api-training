@@ -1,0 +1,103 @@
+[
+  {
+    "output": "=== FULL PROMPT SENT TO AI ===\n\nYou are a strict technical auditor for a Gambling platform documentation system.\n\nYour task is to verify a specific claim from the document `balances.md` against the authoritative source documentation.\n\nThe document being verified describes the Gambling platform's wallet and balance system (real + bonus money, multi-currency).\n\nThe gambling platform architecture dictates that players maintain separate wallets for each supported currency. To ensure transaction integrity, the database enforces exactly one active record per currency wallet per player.\n\ntechnical_fact\n\nPlayers have one wallet per currency with exactly one record.\n\nAnalyze whether the original line is:\n\n1. Accurate \u2014 confirmed by authoritative source\n2. Hallucinated \u2014 invented by AI with no basis in source\n3. Inaccurate \u2014 contradicts or distorts source material\n4. Ambiguous \u2014 cannot be confirmed or denied without more source data\n\nProvide your output exactly in the following format:\nhttps://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1\n\nstatus:\n\n[Insert classification: ACCURATE, HALLUCINATED, INACCURATE, or AMBIGUOUS]\n\nnow:\n\n- [Insert the original line here]\n\nto be:\n\n[Insert the corrected line here based on the source documentation. Be explicit about exactly which details from the original line are incorrect or unsupported. If the original line is accurate, write \"No change needed\"]\n\nWrap the entire output in a single markdown code block using 4 backticks (````markdown).\nDo not add any text outside the code block.\nWrite the document in English.\n\n\n\n=== AI OUTPUT ===\n````markdown\nhttps://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1\n\nstatus:\n\nACCURATE\n\nnow:\n\n- Players have one wallet per currency with exactly one record.\n\nto be:\n\nNo change needed\n````",
+    "test_case": {
+      "scenario": "Wallet-per-currency record uniqueness",
+      "task_description": "Verify claims from balances.md for LLM hallucinations and factual inaccuracies.",
+      "prompt_inputs": {
+        "document_section": "The gambling platform architecture dictates that players maintain separate wallets for each supported currency. To ensure transaction integrity, the database enforces exactly one active record per currency wallet per player.",
+        "claim_type": "technical_fact",
+        "original_line": "Players have one wallet per currency with exactly one record."
+      },
+      "solution_criteria": [
+        "Must assign one of: ACCURATE, HALLUCINATED, INACCURATE, AMBIGUOUS",
+        "Must use structured technical document headings (no raw labels like Line:, Status:)",
+        "Must include the exact original text",
+        "Must include a proposed correction or 'No change needed'",
+        "Must include reasoning citing source evidence"
+      ]
+    },
+    "score": 5,
+    "reasoning": "The solution meets all MANDATORY requirements: it uses the correct format with GitHub link, proper labels ('now:' and 'to be:'), no H1-H3 headings, and is wrapped in exactly 4 backticks with markdown identifier. However, it fails a critical secondary criterion by providing no reasoning or source evidence to support the ACCURATE classification. The task explicitly requires verification 'against the authoritative source documentation,' but the solution provides no citation of such sources. Given that no actual source documentation was provided in the task inputs, the appropriate classification should likely be AMBIGUOUS rather than ACCURATE. The solution makes an unsupported claim without demonstrating access to or analysis of authoritative sources."
+  },
+  {
+    "output": "=== FULL PROMPT SENT TO AI ===\n\nYou are a strict technical auditor for a Gambling platform documentation system.\n\nYour task is to verify a specific claim from the document `balances.md` against the authoritative source documentation.\n\nThe document being verified describes the Gambling platform's wallet and balance system (real + bonus money, multi-currency).\n\nThe platform fetches real-time exchange rates via API for every transaction. No caching layer is implemented for exchange rates to prevent arbitrage.\n\ntechnical_fact\n\nExchange rates are cached for ~15 minutes and updated asynchronously.\n\nAnalyze whether the original line is:\n\n1. Accurate \u2014 confirmed by authoritative source\n2. Hallucinated \u2014 invented by AI with no basis in source\n3. Inaccurate \u2014 contradicts or distorts source material\n4. Ambiguous \u2014 cannot be confirmed or denied without more source data\n\nProvide your output exactly in the following format:\nhttps://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1\n\nstatus:\n\n[Insert classification: ACCURATE, HALLUCINATED, INACCURATE, or AMBIGUOUS]\n\nnow:\n\n- [Insert the original line here]\n\nto be:\n\n[Insert the corrected line here based on the source documentation. Be explicit about exactly which details from the original line are incorrect or unsupported. If the original line is accurate, write \"No change needed\"]\n\nWrap the entire output in a single markdown code block using 4 backticks (````markdown).\nDo not add any text outside the code block.\nWrite the document in English.\n\n\n\n=== AI OUTPUT ===\n````markdown\nhttps://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1\n\nstatus:\n\nINACCURATE\n\nnow:\n\n- Exchange rates are cached for ~15 minutes and updated asynchronously.\n\nto be:\n\n- Exchange rates are fetched via API in real-time for every transaction with no caching layer implemented to prevent arbitrage.\n\nThe original line contradicts the authoritative source documentation which explicitly states that the platform fetches real-time exchange rates via API for every transaction and that no caching layer is implemented. The claim of ~15 minute caching with asynchronous updates directly conflicts with this requirement.\n````",
+    "test_case": {
+      "scenario": "Exchange rate cache duration (~15 minutes)",
+      "task_description": "Verify claims from balances.md for LLM hallucinations and factual inaccuracies.",
+      "prompt_inputs": {
+        "document_section": "The platform fetches real-time exchange rates via API for every transaction. No caching layer is implemented for exchange rates to prevent arbitrage.",
+        "claim_type": "technical_fact",
+        "original_line": "Exchange rates are cached for ~15 minutes and updated asynchronously."
+      },
+      "solution_criteria": [
+        "Must assign one of: ACCURATE, HALLUCINATED, INACCURATE, AMBIGUOUS",
+        "Must flag that the exact 15-minute duration is a high-risk hallucination candidate",
+        "Must use structured technical document headings (no raw labels like Line:, Status:)",
+        "Must include a proposed correction or 'No change needed'"
+      ]
+    },
+    "score": 7,
+    "reasoning": "The solution meets all mandatory requirements: it uses the correct GitHub link format, includes 'now:' and 'to be:' labels, avoids H1/H2/H3 headings, and is wrapped in exactly 4 backticks with markdown specification. The classification of INACCURATE is correct given the direct contradiction between the document section (real-time, no caching) and the original line (15-minute caching). However, the solution falls short on secondary criteria by not explicitly highlighting the 15-minute duration as a hallucination risk and not using structured technical document headings beyond the basic labels. The correction provided is accurate and well-reasoned, but the presentation could be more rigorous in flagging the specific hallucination risk."
+  },
+  {
+    "output": "=== FULL PROMPT SENT TO AI ===\n\nYou are a strict technical auditor for a Gambling platform documentation system.\n\nYour task is to verify a specific claim from the document `balances.md` against the authoritative source documentation.\n\nThe document being verified describes the Gambling platform's wallet and balance system (real + bonus money, multi-currency).\n\nA wallet contains multiple balance segments to track different funds. These include main cash, bonus, and withdrawal-pending. There are no sports-specific pockets in the current MVP.\n\ntechnical_fact\n\nSeven balance 'pockets' exist per wallet: main cash, committed cash, bonus, deposit-pending, withdrawal-pending, sports bonus, sports locked.\n\nAnalyze whether the original line is:\n\n1. Accurate \u2014 confirmed by authoritative source\n2. Hallucinated \u2014 invented by AI with no basis in source\n3. Inaccurate \u2014 contradicts or distorts source material\n4. Ambiguous \u2014 cannot be confirmed or denied without more source data\n\nProvide your output exactly in the following format:\nhttps://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1\n\nstatus:\n\n[Insert classification: ACCURATE, HALLUCINATED, INACCURATE, or AMBIGUOUS]\n\nnow:\n\n- [Insert the original line here]\n\nto be:\n\n[Insert the corrected line here based on the source documentation. Be explicit about exactly which details from the original line are incorrect or unsupported. If the original line is accurate, write \"No change needed\"]\n\nWrap the entire output in a single markdown code block using 4 backticks (````markdown).\nDo not add any text outside the code block.\nWrite the document in English.\n\n\n\n=== AI OUTPUT ===\n````markdown\nhttps://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1\n\nstatus:\n\nINACCURATE\n\nnow:\n\n- Seven balance 'pockets' exist per wallet: main cash, committed cash, bonus, deposit-pending, withdrawal-pending, sports bonus, sports locked.\n\nto be:\n\n- A wallet contains multiple balance segments including main cash, bonus, and withdrawal-pending to track different funds. There are no sports-specific pockets in the current MVP. The original line incorrectly lists seven pockets and includes sports bonus and sports locked, which are explicitly stated as not present in the current version.\n````",
+    "test_case": {
+      "scenario": "Seven balance pockets \u2014 exact names",
+      "task_description": "Verify claims from balances.md for LLM hallucinations and factual inaccuracies.",
+      "prompt_inputs": {
+        "document_section": "A wallet contains multiple balance segments to track different funds. These include main cash, bonus, and withdrawal-pending. There are no sports-specific pockets in the current MVP.",
+        "claim_type": "technical_fact",
+        "original_line": "Seven balance 'pockets' exist per wallet: main cash, committed cash, bonus, deposit-pending, withdrawal-pending, sports bonus, sports locked."
+      },
+      "solution_criteria": [
+        "Must assign one of: ACCURATE, HALLUCINATED, INACCURATE, AMBIGUOUS",
+        "Must verify both the count (seven) and the exact pocket names",
+        "Must use structured technical document headings (no raw labels like Line:, Status:)",
+        "Must include a proposed correction or 'No change needed'"
+      ]
+    },
+    "score": 10,
+    "reasoning": "The solution meets all mandatory requirements: it uses the exact GitHub link format, includes 'now:' and 'to be:' labels, contains no H1/H2/H3 headings, and is wrapped in exactly 4 backticks with markdown language specification. The classification of INACCURATE is correct\u2014the source states only three pockets exist (main cash, bonus, withdrawal-pending) with no sports-specific pockets in the MVP, directly contradicting the claim of seven pockets including sports bonus and sports locked. The correction accurately identifies the discrepancies and provides the authoritative information from the source documentation. All secondary criteria are met: the count is verified, pocket names are checked, and a clear proposed correction is provided."
+  },
+  {
+    "output": "=== FULL PROMPT SENT TO AI ===\n\nYou are a strict technical auditor for a Gambling platform documentation system.\n\nYour task is to verify a specific claim from the document `balances.md` against the authoritative source documentation.\n\nThe document being verified describes the Gambling platform's wallet and balance system (real + bonus money, multi-currency).\n\nWhen a new brand is created without explicit wagering configuration, the system automatically applies a fallback multiplier. This default value is set to 3 across the platform.\n\ndefault_value\n\nNew brands with no wagering config get a default multiplier of 3.\n\nAnalyze whether the original line is:\n\n1. Accurate \u2014 confirmed by authoritative source\n2. Hallucinated \u2014 invented by AI with no basis in source\n3. Inaccurate \u2014 contradicts or distorts source material\n4. Ambiguous \u2014 cannot be confirmed or denied without more source data\n\nProvide your output exactly in the following format:\nhttps://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1\n\nstatus:\n\n[Insert classification: ACCURATE, HALLUCINATED, INACCURATE, or AMBIGUOUS]\n\nnow:\n\n- [Insert the original line here]\n\nto be:\n\n[Insert the corrected line here based on the source documentation. Be explicit about exactly which details from the original line are incorrect or unsupported. If the original line is accurate, write \"No change needed\"]\n\nWrap the entire output in a single markdown code block using 4 backticks (````markdown).\nDo not add any text outside the code block.\nWrite the document in English.\n\n\n\n=== AI OUTPUT ===\n````markdown\nhttps://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1\n\nstatus:\n\nAMBIGUOUS\n\nnow:\n\n- New brands with no wagering config get a default multiplier of 3.\n\nto be:\n\n- The claim regarding a default multiplier value of 3 for new brands without explicit wagering configuration cannot be verified against the provided source material. The statement requires confirmation from authoritative platform documentation specifying: (1) whether a default multiplier is applied automatically, (2) the exact numeric value of this default, and (3) whether this applies universally across all brand types or only under specific conditions.\n````",
+    "test_case": {
+      "scenario": "Default wagering multiplier of 3 for new brands",
+      "task_description": "Verify claims from balances.md for LLM hallucinations and factual inaccuracies.",
+      "prompt_inputs": {
+        "document_section": "When a new brand is created without explicit wagering configuration, the system automatically applies a fallback multiplier. This default value is set to 3 across the platform.",
+        "claim_type": "default_value",
+        "original_line": "New brands with no wagering config get a default multiplier of 3."
+      },
+      "solution_criteria": [
+        "Must assign one of: ACCURATE, HALLUCINATED, INACCURATE, AMBIGUOUS",
+        "Must verify the exact multiplier value (3) as a high-risk hallucination candidate",
+        "Must use structured technical document headings (no raw labels like Line:, Status:)",
+        "Must include a proposed correction or 'No change needed'"
+      ]
+    },
+    "score": 6,
+    "reasoning": "The solution meets all mandatory requirements: it uses the correct format with GitHub link, proper labels, no H1/H2/H3 headings, and is wrapped in 4 backticks. The AMBIGUOUS classification is defensible given no source material was provided. However, it fails secondary criteria by not providing a concrete corrected line or 'No change needed' statement in the 'to be:' section\u2014instead offering meta-commentary about what verification would require. The solution also doesn't adequately address the high-risk hallucination aspect of the specific numeric value '3'. While the reasoning is sound, the output format for the correction doesn't match the expected structure of providing either a revised statement or explicit confirmation that no change is needed."
+  },
+  {
+    "output": "=== FULL PROMPT SENT TO AI ===\n\nYou are a strict technical auditor for a Gambling platform documentation system.\n\nYour task is to verify a specific claim from the document `balances.md` against the authoritative source documentation.\n\nThe document being verified describes the Gambling platform's wallet and balance system (real + bonus money, multi-currency).\n\nCredit corrections are manual adjustments made by administrators. According to compliance rules, these corrections must always be applied directly to the main cash pocket.\n\nbusiness_rule\n\nCredit corrections always add to the main cash pocket.\n\nAnalyze whether the original line is:\n\n1. Accurate \u2014 confirmed by authoritative source\n2. Hallucinated \u2014 invented by AI with no basis in source\n3. Inaccurate \u2014 contradicts or distorts source material\n4. Ambiguous \u2014 cannot be confirmed or denied without more source data\n\nProvide your output exactly in the following format:\nhttps://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1\n\nstatus:\n\n[Insert classification: ACCURATE, HALLUCINATED, INACCURATE, or AMBIGUOUS]\n\nnow:\n\n- [Insert the original line here]\n\nto be:\n\n[Insert the corrected line here based on the source documentation. Be explicit about exactly which details from the original line are incorrect or unsupported. If the original line is accurate, write \"No change needed\"]\n\nWrap the entire output in a single markdown code block using 4 backticks (````markdown).\nDo not add any text outside the code block.\nWrite the document in English.\n\n\n\n=== AI OUTPUT ===\n````markdown\nhttps://github.com/hex-drift/backbone/blob/main/docs/balances.md:L1\n\nstatus:\n\nAMBIGUOUS\n\nnow:\n\n- Credit corrections are manual adjustments made by administrators that must always be applied directly to the main cash pocket according to compliance rules.\n\nto be:\n\n- Cannot verify the specific compliance rule regarding credit corrections being applied exclusively to the main cash pocket without access to the authoritative source documentation. The statement may be accurate but requires confirmation against the actual balances.md source material and compliance rule documentation.\n````",
+    "test_case": {
+      "scenario": "Credit corrections always go to main cash pocket",
+      "task_description": "Verify claims from balances.md for LLM hallucinations and factual inaccuracies.",
+      "prompt_inputs": {
+        "document_section": "Credit corrections are manual adjustments made by administrators. According to compliance rules, these corrections must always be applied directly to the main cash pocket.",
+        "claim_type": "business_rule",
+        "original_line": "Credit corrections always add to the main cash pocket."
+      },
+      "solution_criteria": [
+        "Must assign one of: ACCURATE, HALLUCINATED, INACCURATE, AMBIGUOUS",
+        "Must verify the direction rule (main cash pocket specifically)",
+        "Must use structured technical document headings (no raw labels like Line:, Status:)",
+        "Must include a proposed correction or 'No change needed'"
+      ]
+    },
+    "score": 7,
+    "reasoning": "The solution meets all mandatory formatting requirements: it uses the correct GitHub link format, includes 'now:' and 'to be:' labels, avoids H1/H2/H3 headings, and is wrapped in exactly 4 backticks. However, it falls short on secondary criteria by failing to rigorously verify the directional rule about the main cash pocket and by providing an insufficiently specific correction proposal. The AMBIGUOUS classification is defensible given the lack of source access, but the solution should have been more explicit about what specific aspects cannot be verified (e.g., the 'always' qualifier, the 'add to' vs 'applied to' distinction, or the compliance rule citation). The 'to be:' section reads as a non-answer rather than a concrete proposed correction."
+  }
+]
