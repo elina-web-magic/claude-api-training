@@ -1,0 +1,28 @@
+<svg viewBox="0 0 660 360" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui, sans-serif">
+  <title>BM25 lexical search</title>
+  <desc>Query terms are matched exactly against documents; documents with matching keywords score higher.</desc>
+  <rect x="0" y="0" width="660" height="360" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="22" y="34" font-size="16" font-weight="700" fill="#0f172a">BM25 — lexical (exact-keyword) search</text>
+
+  <rect x="22" y="52" width="320" height="40" rx="6" fill="#bae6fd" stroke="#0284c7"/>
+  <text x="34" y="77" font-size="13" fill="#082f49">Query:  XDR-471   markers</text>
+
+  <text x="22" y="130" font-size="13" font-weight="600" fill="#0f172a">Doc 1</text>
+  <rect x="70" y="114" width="180" height="22" rx="4" fill="#bbf7d0" stroke="#16a34a"/>
+  <text x="80" y="130" font-size="12" fill="#052e16">…the XDR-471 markers…</text>
+  <rect x="430" y="114" width="200" height="20" rx="3" fill="#16a34a"/>
+  <text x="262" y="130" font-size="12" fill="#166534">2 hits -> high score</text>
+
+  <text x="22" y="186" font-size="13" font-weight="600" fill="#0f172a">Doc 2</text>
+  <rect x="70" y="170" width="200" height="22" rx="4" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="80" y="186" font-size="12" fill="#475569">…quarterly revenue growth…</text>
+  <rect x="430" y="170" width="28" height="20" rx="3" fill="#cbd5e1"/>
+  <text x="282" y="186" font-size="12" fill="#64748b">0 hits -> low score</text>
+
+  <line x1="22" y1="220" x2="638" y2="220" stroke="#e2e8f0"/>
+  <text x="22" y="248" font-size="12.5" font-weight="600" fill="#0f172a">Score factors:</text>
+  <text x="22" y="272" font-size="12.5" fill="#334155">- term frequency f(t,D) — more hits, higher score…</text>
+  <text x="40" y="292" font-size="12.5" fill="#334155">…but saturates via k1 (10th hit ~ 2nd)</text>
+  <text x="22" y="316" font-size="12.5" fill="#334155">- IDF(t) — rare words weigh more than common ones</text>
+  <text x="22" y="338" font-size="12.5" fill="#334155">- length norm b — long docs don't win just by being long</text>
+</svg>

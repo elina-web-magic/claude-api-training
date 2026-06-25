@@ -1,0 +1,50 @@
+<svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui, sans-serif">
+  <title>ANN index families HNSW IVF PQ</title>
+  <desc>HNSW navigates a layered graph, IVF searches a few clustered cells, PQ compresses vectors into small codes.</desc>
+  <rect x="0" y="0" width="700" height="320" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="22" y="32" font-size="16" font-weight="700" fill="#0f172a">ANN indexes — make vector search fast at scale</text>
+
+  <text x="40" y="66" font-size="13.5" font-weight="700" fill="#7c3aed">HNSW — graph</text>
+  <rect x="22" y="76" width="200" height="200" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+  <line x1="60" y1="120" x2="170" y2="120" stroke="#cbd5e1"/>
+  <line x1="60" y1="120" x2="100" y2="180" stroke="#cbd5e1"/>
+  <line x1="170" y1="120" x2="140" y2="180" stroke="#cbd5e1"/>
+  <line x1="100" y1="180" x2="140" y2="180" stroke="#cbd5e1"/>
+  <line x1="140" y1="180" x2="120" y2="240" stroke="#cbd5e1"/>
+  <g stroke="#7c3aed" stroke-width="2.5">
+    <line x1="60" y1="120" x2="100" y2="180"/>
+    <line x1="100" y1="180" x2="120" y2="240"/>
+  </g>
+  <circle cx="60" cy="120" r="7" fill="#ede9fe" stroke="#7c3aed"/>
+  <circle cx="170" cy="120" r="6" fill="#cbd5e1"/>
+  <circle cx="100" cy="180" r="6" fill="#ede9fe" stroke="#7c3aed"/>
+  <circle cx="140" cy="180" r="6" fill="#cbd5e1"/>
+  <circle cx="120" cy="240" r="8" fill="#16a34a" stroke="#052e16"/>
+  <text x="40" y="100" font-size="10.5" fill="#5b21b6">enter top -> hop down</text>
+
+  <text x="270" y="66" font-size="13.5" font-weight="700" fill="#ea580c">IVF — cells</text>
+  <rect x="248" y="76" width="200" height="200" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+  <line x1="248" y1="143" x2="448" y2="143" stroke="#e2e8f0"/>
+  <line x1="248" y1="210" x2="448" y2="210" stroke="#e2e8f0"/>
+  <line x1="315" y1="76" x2="315" y2="276" stroke="#e2e8f0"/>
+  <line x1="381" y1="76" x2="381" y2="276" stroke="#e2e8f0"/>
+  <rect x="315" y="143" width="66" height="67" fill="#ffedd5" stroke="#ea580c" stroke-width="2"/>
+  <g fill="#cbd5e1"><circle cx="280" cy="110" r="4"/><circle cx="410" cy="120" r="4"/><circle cx="290" cy="240" r="4"/><circle cx="420" cy="250" r="4"/><circle cx="300" cy="180" r="4"/></g>
+  <g fill="#ea580c"><circle cx="335" cy="165" r="4"/><circle cx="360" cy="190" r="4"/><circle cx="345" cy="185" r="4"/></g>
+  <circle cx="348" cy="176" r="7" fill="#16a34a" stroke="#052e16"/>
+  <text x="266" y="296" font-size="10.5" fill="#9a3412">search only the nearest cell(s)</text>
+
+  <text x="494" y="66" font-size="13.5" font-weight="700" fill="#0284c7">PQ — compress</text>
+  <rect x="474" y="76" width="204" height="200" rx="8" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="490" y="120" font-size="11" fill="#475569">full vector (1024 floats):</text>
+  <rect x="490" y="130" width="172" height="22" rx="3" fill="#bae6fd" stroke="#0284c7"/>
+  <text x="500" y="146" font-size="10.5" fill="#082f49">0.12  -0.83  0.44  0.07 …</text>
+  <text x="560" y="180" font-size="16" fill="#94a3b8">|</text>
+  <text x="490" y="210" font-size="11" fill="#475569">compact codes (few bytes):</text>
+  <g>
+    <rect x="490" y="220" width="34" height="24" rx="3" fill="#ffedd5" stroke="#ea580c"/><text x="500" y="237" font-size="11" fill="#431407">37</text>
+    <rect x="528" y="220" width="34" height="24" rx="3" fill="#ffedd5" stroke="#ea580c"/><text x="540" y="237" font-size="11" fill="#431407">04</text>
+    <rect x="566" y="220" width="34" height="24" rx="3" fill="#ffedd5" stroke="#ea580c"/><text x="576" y="237" font-size="11" fill="#431407">91</text>
+  </g>
+  <text x="490" y="266" font-size="10.5" fill="#0369a1">smaller RAM, slightly less precise</text>
+</svg>

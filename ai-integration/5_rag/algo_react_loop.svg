@@ -1,0 +1,37 @@
+<svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui, sans-serif">
+  <title>ReAct loop</title>
+  <desc>ReAct interleaves Thought, Action and Observation in a loop until enough information to answer.</desc>
+  <rect x="0" y="0" width="700" height="360" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+  <defs><marker id="rk" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#64748b"/></marker></defs>
+  <text x="22" y="34" font-size="16" font-weight="700" fill="#0f172a">ReAct — Reason + Act loop (agents)</text>
+
+  <rect x="300" y="58" width="100" height="44" rx="8" fill="#bbf7d0" stroke="#16a34a"/>
+  <text x="320" y="85" font-size="12.5" fill="#052e16">Thought</text>
+
+  <rect x="500" y="150" width="110" height="44" rx="8" fill="#ede9fe" stroke="#7c3aed"/>
+  <text x="518" y="177" font-size="12.5" fill="#1e1b4b">Action (tool)</text>
+
+  <rect x="300" y="240" width="110" height="44" rx="8" fill="#ffedd5" stroke="#ea580c"/>
+  <text x="316" y="267" font-size="12.5" fill="#431407">Observation</text>
+
+  <rect x="90" y="150" width="110" height="44" rx="8" fill="#bbf7d0" stroke="#16a34a"/>
+  <text x="104" y="172" font-size="11.5" fill="#052e16">enough to</text>
+  <text x="116" y="187" font-size="11.5" fill="#052e16">answer?</text>
+
+  <path d="M400 86 q90 10 110 70" fill="none" stroke="#64748b" marker-end="url(#rk)"/>
+  <path d="M540 194 q-40 60 -135 60" fill="none" stroke="#64748b" marker-end="url(#rk)"/>
+  <path d="M300 262 q-90 10 -105 -60" fill="none" stroke="#64748b" marker-end="url(#rk)"/>
+  <path d="M150 150 q30 -70 150 -78" fill="none" stroke="#64748b" marker-end="url(#rk)"/>
+  <text x="200" y="120" font-size="10.5" fill="#475569">loop: no</text>
+
+  <rect x="300" y="150" width="100" height="44" rx="8" fill="#bae6fd" stroke="#0284c7"/>
+  <text x="322" y="177" font-size="12.5" fill="#082f49">Answer</text>
+  <path d="M200 172 h95" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#rk)"/>
+  <text x="212" y="146" font-size="10.5" fill="#166534">yes -></text>
+
+  <text x="22" y="316" font-size="12" font-weight="700" fill="#0f172a">Legend</text>
+  <rect x="22" y="324" width="13" height="13" rx="3" fill="#bbf7d0" stroke="#16a34a"/><text x="40" y="335" font-size="11" fill="#334155">Logic (Thought / decision)</text>
+  <rect x="210" y="324" width="13" height="13" rx="3" fill="#ede9fe" stroke="#7c3aed"/><text x="228" y="335" font-size="11" fill="#334155">Infra (tool call)</text>
+  <rect x="350" y="324" width="13" height="13" rx="3" fill="#ffedd5" stroke="#ea580c"/><text x="368" y="335" font-size="11" fill="#334155">Data (observation)</text>
+  <rect x="500" y="324" width="13" height="13" rx="3" fill="#bae6fd" stroke="#0284c7"/><text x="518" y="335" font-size="11" fill="#334155">Output (answer)</text>
+</svg>

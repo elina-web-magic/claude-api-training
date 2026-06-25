@@ -220,6 +220,12 @@ __marimo__/
 # Monooka AI
 monooka-ai/backend/*.json
 
+# Custom docs
+CLAUDE.md
+AGENT_INSTRUCTIONS.md
+*.pdf
+RAG_USE_CASES_GUIDE.md
+
 # OS Files
 .DS_Store
 .DS_Store?

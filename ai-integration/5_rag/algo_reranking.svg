@@ -1,0 +1,34 @@
+<svg viewBox="0 0 660 340" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui, sans-serif">
+  <title>Two-stage reranking</title>
+  <desc>A fast retriever returns top-100 candidates, then a slow cross-encoder reranks them to top-5.</desc>
+  <rect x="0" y="0" width="660" height="340" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+  <defs><marker id="r1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/></marker></defs>
+  <text x="22" y="34" font-size="16" font-weight="700" fill="#0f172a">Reranking — cheap recall, then precise re-score</text>
+
+  <rect x="22" y="140" width="90" height="40" rx="6" fill="#bae6fd" stroke="#0284c7"/>
+  <text x="48" y="165" font-size="13" fill="#082f49">Query</text>
+
+  <rect x="150" y="130" width="150" height="60" rx="6" fill="#bbf7d0" stroke="#16a34a"/>
+  <text x="168" y="155" font-size="12.5" fill="#052e16">Retriever</text>
+  <text x="168" y="174" font-size="11" fill="#166534">bi-encoder / BM25</text>
+  <line x1="112" y1="160" x2="148" y2="160" stroke="#94a3b8" marker-end="url(#r1)"/>
+
+  <rect x="330" y="120" width="80" height="80" rx="6" fill="#ffedd5" stroke="#ea580c"/>
+  <text x="345" y="155" font-size="12" font-weight="700" fill="#431407">top-100</text>
+  <text x="350" y="174" font-size="10.5" fill="#9a3412">candidates</text>
+  <line x1="300" y1="160" x2="328" y2="160" stroke="#94a3b8" marker-end="url(#r1)"/>
+
+  <rect x="435" y="130" width="120" height="60" rx="6" fill="#ede9fe" stroke="#7c3aed"/>
+  <text x="448" y="155" font-size="12" fill="#1e1b4b">Cross-encoder</text>
+  <text x="448" y="174" font-size="11" fill="#5b21b6">reranker</text>
+  <line x1="410" y1="160" x2="433" y2="160" stroke="#94a3b8" marker-end="url(#r1)"/>
+  <line x1="67" y1="140" x2="490" y2="128" stroke="#cbd5e1" stroke-dasharray="3 3"/>
+
+  <rect x="580" y="135" width="60" height="50" rx="6" fill="#ffedd5" stroke="#ea580c"/>
+  <text x="592" y="158" font-size="12" font-weight="700" fill="#431407">top-5</text>
+  <line x1="555" y1="160" x2="578" y2="160" stroke="#94a3b8" marker-end="url(#r1)"/>
+
+  <text x="22" y="250" font-size="12.5" fill="#334155"><tspan font-weight="600">Bi-encoder:</tspan> embeds query &amp; doc separately -> fast, pre-computable, good recall.</text>
+  <text x="22" y="274" font-size="12.5" fill="#334155"><tspan font-weight="600">Cross-encoder:</tspan> reads query + doc together -> slow, but best relevance.</text>
+  <text x="22" y="298" font-size="12.5" fill="#475569">e.g. voyage-rerank, cohere-rerank</text>
+</svg>

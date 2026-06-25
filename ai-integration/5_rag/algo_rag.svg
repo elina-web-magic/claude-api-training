@@ -1,0 +1,32 @@
+<svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui, sans-serif">
+  <title>RAG pipeline</title>
+  <desc>Query retrieves chunks from a vector DB, which augment the prompt, then the LLM generates a grounded answer.</desc>
+  <rect x="0" y="0" width="700" height="280" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+  <defs><marker id="rg1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/></marker></defs>
+  <text x="22" y="34" font-size="16" font-weight="700" fill="#0f172a">RAG — Retrieval-Augmented Generation</text>
+
+  <rect x="22" y="110" width="90" height="46" rx="6" fill="#bae6fd" stroke="#0284c7"/>
+  <text x="50" y="138" font-size="13" fill="#082f49">Query</text>
+
+  <rect x="150" y="100" width="120" height="66" rx="6" fill="#bbf7d0" stroke="#16a34a"/>
+  <text x="166" y="128" font-size="12.5" fill="#052e16">Retrieve</text>
+  <text x="166" y="146" font-size="10.5" fill="#166534">vector DB / kNN</text>
+  <line x1="112" y1="133" x2="148" y2="133" stroke="#94a3b8" marker-end="url(#rg1)"/>
+
+  <rect x="308" y="100" width="120" height="66" rx="6" fill="#ffedd5" stroke="#ea580c"/>
+  <text x="322" y="128" font-size="12.5" fill="#431407">Augment</text>
+  <text x="322" y="146" font-size="10.5" fill="#9a3412">query + chunks</text>
+  <line x1="270" y1="133" x2="306" y2="133" stroke="#94a3b8" marker-end="url(#rg1)"/>
+
+  <rect x="466" y="100" width="110" height="66" rx="6" fill="#ede9fe" stroke="#7c3aed"/>
+  <text x="486" y="128" font-size="12.5" fill="#1e1b4b">Generate</text>
+  <text x="486" y="146" font-size="10.5" fill="#5b21b6">LLM</text>
+  <line x1="428" y1="133" x2="464" y2="133" stroke="#94a3b8" marker-end="url(#rg1)"/>
+
+  <rect x="610" y="110" width="70" height="46" rx="6" fill="#bae6fd" stroke="#0284c7"/>
+  <text x="622" y="138" font-size="11.5" fill="#082f49">Answer</text>
+  <line x1="576" y1="133" x2="608" y2="133" stroke="#94a3b8" marker-end="url(#rg1)"/>
+
+  <text x="22" y="220" font-size="12.5" fill="#334155">The answer is <tspan font-weight="700">grounded in retrieved chunks</tspan>, not just the model's memory —</text>
+  <text x="22" y="242" font-size="12.5" fill="#334155">fewer hallucinations, and answers about private / fresh data the model never trained on.</text>
+</svg>

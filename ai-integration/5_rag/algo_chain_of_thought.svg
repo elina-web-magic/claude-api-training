@@ -1,0 +1,35 @@
+<svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui, sans-serif">
+  <title>Chain-of-Thought vs direct answer</title>
+  <desc>Direct answering can be wrong; chain-of-thought reasons step by step and reaches the correct answer.</desc>
+  <rect x="0" y="0" width="700" height="300" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+  <defs><marker id="c1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/></marker></defs>
+  <text x="22" y="34" font-size="16" font-weight="700" fill="#0f172a">Chain-of-Thought — reason before answering</text>
+
+  <text x="22" y="76" font-size="13" font-weight="700" fill="#dc2626">Direct</text>
+  <rect x="90" y="58" width="100" height="38" rx="6" fill="#bae6fd" stroke="#0284c7"/>
+  <text x="112" y="82" font-size="12.5" fill="#082f49">Question</text>
+  <line x1="190" y1="77" x2="240" y2="77" stroke="#94a3b8" marker-end="url(#c1)"/>
+  <rect x="244" y="58" width="150" height="38" rx="6" fill="#fee2e2" stroke="#dc2626"/>
+  <text x="262" y="82" font-size="12.5" fill="#450a0a">answer (often wrong)</text>
+
+  <line x1="22" y1="120" x2="678" y2="120" stroke="#e2e8f0"/>
+
+  <text x="22" y="160" font-size="13" font-weight="700" fill="#16a34a">CoT</text>
+  <rect x="90" y="142" width="90" height="38" rx="6" fill="#bae6fd" stroke="#0284c7"/>
+  <text x="106" y="166" font-size="12" fill="#082f49">Question</text>
+  <line x1="180" y1="161" x2="206" y2="161" stroke="#94a3b8" marker-end="url(#c1)"/>
+  <rect x="210" y="142" width="100" height="38" rx="6" fill="#bbf7d0" stroke="#16a34a"/>
+  <text x="232" y="166" font-size="12" fill="#052e16">step 1</text>
+  <line x1="310" y1="161" x2="336" y2="161" stroke="#94a3b8" marker-end="url(#c1)"/>
+  <rect x="340" y="142" width="100" height="38" rx="6" fill="#bbf7d0" stroke="#16a34a"/>
+  <text x="362" y="166" font-size="12" fill="#052e16">step 2</text>
+  <line x1="440" y1="161" x2="466" y2="161" stroke="#94a3b8" marker-end="url(#c1)"/>
+  <rect x="470" y="142" width="100" height="38" rx="6" fill="#bbf7d0" stroke="#16a34a"/>
+  <text x="492" y="166" font-size="12" fill="#052e16">step 3</text>
+  <line x1="570" y1="161" x2="596" y2="161" stroke="#94a3b8" marker-end="url(#c1)"/>
+  <rect x="600" y="142" width="80" height="38" rx="6" fill="#bae6fd" stroke="#0284c7"/>
+  <text x="612" y="166" font-size="11.5" fill="#082f49">answer +</text>
+
+  <text x="22" y="232" font-size="12.5" fill="#334155">Forcing intermediate steps makes the model's reasoning explicit —</text>
+  <text x="22" y="254" font-size="12.5" fill="#334155">big gains on math, logic, and multi-step questions.</text>
+</svg>
