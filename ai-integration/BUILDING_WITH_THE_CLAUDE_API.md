@@ -160,3 +160,32 @@ This comprehensive video course teaches developers how to integrate Claude AI in
 ### Wrapping up
 
 - Course Wrap Up
+
+### Advanced Python and Data Engineering
+
+- Asynchronous programming and API integration
+- Robust error handling and complex authorization (OIDC / OAuth)
+- Web scraping with requests, Playwright, or Puppeteer
+- Big Data handling and efficient storage formats (Parquet)
+
+### Advanced RAG and Context Management
+
+- Embedding clustering
+- Advanced text chunking strategies
+- Vector databases and topic modeling pipelines
+
+### Agentic AI and Orchestration
+
+- Autonomous AI agents using LangChain or LlamaIndex
+- Advanced tool use and decision making
+- Agentic fallbacks and OpenAI-compatible API integration
+
+### Cloud Infrastructure and Deployment
+
+- Docker containerization and CI/CD
+- Google Cloud Platform essentials (Cloud Run, Batch, GCS, BigQuery)
+
+### LLMOps and Data Orchestration
+
+- Self-hosted model interaction using vLLM
+- Data workflow management with Apache Airflow
