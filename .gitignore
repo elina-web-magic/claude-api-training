@@ -221,12 +221,9 @@ __marimo__/
 monooka-ai/backend/*.json
 
 # Custom docs
-CLAUDE.md
-AGENT_INSTRUCTIONS.md
+*.md
 *.pdf
-RAG_USE_CASES_GUIDE.md
-MCP_BEST_USE_CASES_UA.md
-FEATURES_OF_CLAUDE_UA.md
+!ai-integration/7_features_of_claude/earth.pdf
 
 # OS Files
 .DS_Store
