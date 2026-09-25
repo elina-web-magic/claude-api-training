@@ -220,11 +220,6 @@ __marimo__/
 # Monooka AI
 monooka-ai/backend/*.json
 
-# Custom docs
-*.md
-*.pdf
-!ai-integration/7_features_of_claude/earth.pdf
-
 # OS Files
 .DS_Store
 .DS_Store?
